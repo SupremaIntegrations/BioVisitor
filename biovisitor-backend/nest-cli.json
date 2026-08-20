@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "watchAssets": true,
+    "assets": [
+      {
+        "include": "**/*.hbs",
+        "outDir": "dist"
+      },
+      {
+        "include": "i18n/**/*",
+        "outDir": "dist"
+      }
+    ]
+  }
+}

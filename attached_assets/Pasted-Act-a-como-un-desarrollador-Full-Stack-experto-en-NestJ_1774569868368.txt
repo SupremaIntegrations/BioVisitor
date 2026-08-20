@@ -1,0 +1,32 @@
+Actúa como un desarrollador Full-Stack experto en NestJS, Next.js y arquitecturas de seguridad física. Necesito implementar un módulo de Monitoreo de Eventos (Tiempo Real e Historial) en el sistema 'BioVisitor X', integrándolo con la API de Suprema BioStar 2.
+Objetivo: Crear un sistema que permita al operador ver quién, cuándo y dónde accedió a las instalaciones. El sistema tendrá dos componentes: un 'Live Ticker' (Eventos en tiempo real) y un 'Data Table' de Auditoría Forense (Historial).
+Instrucciones para el Backend (NestJS - BioStar 2 API):
+Integración en Tiempo Real (WebSockets):
+En el SupremaGatewayModule, implementa un cliente WebSocket que se conecte a la URI de BioStar 2 (wss://[BIOSTAR_IP]/wsapi)
+.
+Al recibir un MessageEvent, extrae el nodo Event que contiene user_id.name, event_type_id.code, device_id.name y datetime
+. Transmite esta data parseada a nuestro frontend (Next.js) mediante el Gateway propio de BioVisitor X.
+Endpoint de Historial (POST /api/v1/logs/history):
+Crea un servicio que consuma el endpoint de BioStar 2 POST /api/events/search
+.
+Asegúrate de inyectar el token de sesión en la cabecera HTTP bajo la clave bs-session-id
+.
+El payload hacia BioStar 2 debe tener esta estructura exacta para filtrar por fechas y ordenar descendentemente: {"Query": {"limit": 100, "conditions": [{"column": "datetime", "operator": 3, "values": ["START_DATE_UTC", "END_DATE_UTC"]}], "orders": [{"column": "datetime", "descending": true}]}}
+.
+Validación Defensiva (Zod):
+Implementa esquemas Zod con .passthrough().optional() para validar las respuestas de BioStar 2, ya que la API externa puede devolver estructuras con campos variables o inconsistentes
+. Registra cualquier falla de validación usando el logger Pino
+.
+Instrucciones para el Frontend (Next.js - Tailwind - shadcn/ui):
+Componente 'Live Event Ticker' (Tiempo Real):
+Crea un componente lateral o un banner superior que escuche el WebSocket de NestJS.
+Muestra los últimos 10 eventos apilados. Utiliza un diseño 'Zero-Training' con colores: Verde para accesos concedidos (ej. evento contiene 'succeeded' o 'granted') y Rojo para accesos denegados ('failed' o 'denied')
+. Muestra: Nombre del visitante, Puerta/Dispositivo, y Hora.
+Componente 'Data Table de Auditoría' (Historial):
+Crea una tabla de datos robusta usando TanStack React Query (useQuery) para consumir /api/v1/logs/history.
+Requisito Crítico de Fechas: La data recibida desde el backend vendrá con el campo datetime en formato UTC-0
+. Utiliza una librería como date-fns o dayjs para parsear el string y mostrarlo en la zona horaria local del navegador del operador de forma automática
+.
+Incluye Date Pickers para seleccionar el rango de búsqueda (Hoy, Últimos 7 días, Mes actual) que alimentarán las variables values del query.
+Maneja los estados de la UI: Loading (Skeletons), Error (Alert component rojo) y Empty
+."

@@ -1,0 +1,33 @@
+Actúa como un Desarrollador Senior Full-Stack experto en NestJS, Next.js, React, TypeScript y manipulación de fechas.
+
+Necesito que agregues la funcionalidad de selección de vigencia de la visita (Fecha/Hora de Inicio y Fecha/Hora de Fin) en el formulario de registro de visitantes de BioVisitor X. Esta data finalmente se enviará a una API externa estricta (Suprema BioStar 2), por lo que el manejo de la zona horaria y el formato es crítico.
+
+Sigue EXACTAMENTE estas instrucciones:
+
+**1. FRONTEND (Next.js - Formulario de Registro):**
+- Agrega dos selectores de Fecha y Hora (Date/Time Picker) para `startDatetime` y `expiryDatetime`.
+- Agrega un botón de acción rápida llamado "Hoy" junto a los selectores.
+- Implementa la siguiente lógica estricta para el botón "Hoy":
+  a. Al hacer clic, `startDatetime` debe llenarse automáticamente con la fecha y hora exacta del momento en que se hizo clic.
+  b. `expiryDatetime` debe llenarse automáticamente con la misma fecha actual, pero la hora debe fijarse matemáticamente a las 11:59 PM (23:59:00) de la zona horaria local del usuario.
+- Valida en el cliente que `startDatetime` sea siempre menor que `expiryDatetime`. Si no lo es, muestra un mensaje de error claro en la UI y bloquea el envío.
+
+**2. BACKEND / SHARED (Validación Zod en shared/schema.ts):**
+- Actualiza el esquema de validación (Zod) del payload del visitante para que requiera `startDatetime` y `expiryDatetime` como strings o dates válidos.
+
+**3. BACKEND (NestJS - Transformación para la API Externa):**
+- El API externa de BioStar 2 requiere que las fechas se envíen en los campos `start_datetime` y `expiry_datetime` en formato estricto ISO-8601 y en UTC (ejemplo: "2025-10-08T04:00:00.00Z").
+- En el servicio que hace el POST hacia la API externa (`/api/users`), asegúrate de convertir las fechas recibidas del frontend a UTC usando `.toISOString()`.
+- Reemplaza la terminación estándar de JavaScript (que incluye milisegundos, ej. `.123Z`) para que coincida exactamente con el formato esperado por BioStar 2 si es necesario (generalmente `.00Z`).
+- El payload JSON que se construye para BioStar 2 debe mapear esto dentro del objeto "User":
+  ```json
+  {
+    "User": {
+      "start_datetime": "VALOR_UTC_CALCULADO",
+      "expiry_datetime": "VALOR_UTC_CALCULADO"
+      // ... otros campos del visitante
+    }
+  }
+Criterios de Aceptación: ✅ El botón "Hoy" facilita la captura rápida fijando el fin de la visita a las 23:59 locales. ✅ El frontend maneja las fechas en la zona horaria local del operador. ✅ El backend se encarga de la conversión defensiva a UTC antes de inyectar los datos en el payload para el API externa. ✅ El esquema Zod valida la integridad de los datos de fecha antes de procesarlos.
+Por favor, genera y actualiza los componentes del Frontend, el esquema Zod y el servicio del Backend para implementar esta funcionalidad.
+

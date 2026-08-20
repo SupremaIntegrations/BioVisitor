@@ -1,0 +1,28 @@
+Actúa como un Arquitecto de Software y Analista de Sistemas Senior. Tu tarea es diseñar la especificación técnica y funcional detallada para un "Módulo de Registro y Control de Ingreso de Equipos". Este módulo debe ser robusto, seguro y escalable.
+
+Por favor, estructura la solución detallando los siguientes pilares:
+
+1. Modelo de Datos y Campos Requeridos:
+- Define los campos necesarios para el registro y reporte de ingreso de equipos.
+- Divide los campos entre "Obligatorios" (ej. Número de serie, Modelo, Responsable, Área) y "Opcionales".
+- Incluye mecanismos para garantizar la integridad de los datos y una validación automática del número de serie para evitar duplicados.
+
+2. Matriz de Permisos y Roles (Seguridad):
+- Diseña una política de control de acceso basada en roles (RBAC) debido a la alta sensibilidad del inventario.
+- Especifica qué roles (ej. Administrador, ) pueden: Ver, Modificar o Exportar los reportes.
+
+3. Políticas y Reglas de Negocio Automatizadas:
+- Define el flujo para equipos que requieren autorización previa antes de ingresar.
+- Implementa una regla para alertas automáticas de equipos que llevan un tiempo excesivo en las instalaciones sin registrar su salida.
+
+4. Módulo de Reportes y Exportación:
+- Define los requisitos para la generación de reportes en PDF y CSV.
+- Los formatos deben ser consistentes, personalizables, compatibles con auditorías y garantizar que no haya pérdida ni alteración de información durante la exportación.
+
+5. Auditoría y Trazabilidad:
+- Diseña el esquema para una bitácora de auditoría (logs) inmutable, que registre todas las acciones (crear, modificar, ver, exportar) asociadas al ingreso de equipos, detallando usuario, fecha, hora y acción.
+
+6. Escalabilidad Futura:
+- Asegura que la arquitectura propuesta permita, en futuras versiones, agregar nuevos filtros, campos personalizados o formatos de exportación sin romper la estructura base.
+
+Entrega la respuesta de forma estructurada, utilizando tablas para la matriz de permisos y el diccionario de campos, y listas claras para las reglas de negocio.

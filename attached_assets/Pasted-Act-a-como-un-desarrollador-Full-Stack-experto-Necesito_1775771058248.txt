@@ -1,0 +1,29 @@
+Actúa como un desarrollador Full-Stack experto. Necesito agregar una nueva funcionalidad crítica al módulo de "Registro de Visitantes" de nuestra aplicación BioVisitor X. 
+
+El requerimiento es implementar un control de los activos (laptops, tablets, herramientas, etc.) que ingresa el visitante, para poder verificarlos al momento de su salida.
+
+Por favor, implementa los siguientes cambios siguiendo estrictamente la arquitectura del proyecto (Node.js/Express, React, React Hook Form + Zod):
+
+1. ACTUALIZACIÓN DEL SCHEMA Y BASE DE DATOS (shared/schema.ts):
+- Modifica el esquema de la visita/visitante para incluir un campo booleano `has_assets` (default: false).
+- Agrega un campo `assets` que sea un array de objetos (o una tabla relacional si la base de datos lo requiere) con la siguiente estructura:
+  { description: string, serial_number: string }
+- Actualiza los esquemas de validación de Zod correspondientes para el request de creación y actualización del visitante.
+
+2. FRONTEND - FORMULARIO DE REGISTRO (React Hook Form):
+- En el componente del formulario de registro de visitantes, agrega un Checkbox o Toggle (usando shadcn/ui) con el texto: "¿El visitante ingresa con equipos o activos?".
+- Implementa renderizado condicional: Si el checkbox está activo, despliega dinámicamente dos campos de texto requeridos: "Descripción del Activo" (ej. Laptop Dell) y "Número de Serie".
+- Utiliza `useFieldArray` de react-hook-form para permitir que el recepcionista pueda agregar múltiples activos si es necesario, pero mostrando al menos un par de campos por defecto al activar el checkbox.
+
+3. FRONTEND - PROCESO DE CHECK-OUT Y DASHBOARD:
+- En la vista de detalles de la visita activa y en el modal de Check-out, agrega una sección de "Verificación de Activos" que liste la descripción y el serial de los objetos que el visitante declaró al ingresar.
+- Agrega un checkbox de confirmación visual para el recepcionista: "Activos verificados a la salida".
+
+4. BACKEND - API Y AUDITORÍA (server/routes.ts):
+- Asegúrate de que el endpoint POST/PUT de registro reciba y guarde correctamente el array de activos.
+- Utiliza el sistema de logging estructurado existente (Pino/AuditLog) para registrar un evento de auditoría cuando un visitante ingresa con activos (ej. registrar la cantidad de activos ingresados).
+
+Criterios de aceptación:
+- La UI debe manejar correctamente los estados de error con mensajes claros (ej. "El número de serie es obligatorio si declara un activo").
+- La base de datos debe almacenar el JSON de los activos o los registros relacionados de forma segura.
+- Todo debe estar fuertemente tipado con TypeScript.

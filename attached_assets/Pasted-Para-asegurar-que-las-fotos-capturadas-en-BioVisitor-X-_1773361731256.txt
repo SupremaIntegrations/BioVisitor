@@ -1,0 +1,28 @@
+Para asegurar que las fotos capturadas en **BioVisitor X** sean perfectamente compatibles con los lectores de reconocimiento facial de Suprema (como FaceStation F2, BioStation 3 o BioEntry W3), debes seguir estas buenas prácticas extraídas de los manuales técnicos de BioStar X:
+
+### Buenas Prácticas para el Enrolamiento Facial
+Para que el algoritmo genere un template biométrico de alta precisión que los lectores reconozcan sin errores, la foto debe cumplir con lo siguiente:
+
+*   **Composición y Encuadre:**
+    *   **Hombros visibles:** Asegúrate de que ambos hombros aparezcan correctamente en la imagen.
+    *   **Posición de la cabeza:** El rostro debe estar completamente de frente, mirando directamente a la lente. No se debe inclinar, subir ni bajar la cabeza.
+    *   **Distancia:** La distancia ideal entre el rostro y la cámara debe ser de **60 a 100 cm**.
+*   **Aspecto del Usuario:**
+    *   **Expresión Neutral:** No se debe sonreír ni cambiar la expresión facial durante la captura.
+    *   **Ojos Abiertos:** Los ojos deben estar completamente abiertos.
+    *   **Sin Accesorios:** Está prohibido el uso de máscaras, sombreros, gorras, parches o maquillaje muy espeso que oculte rasgos faciales.
+    *   **Una sola persona:** Solo debe haber una persona visible en el encuadre.
+*   **Entorno Técnico:**
+    *   **Iluminación:** Evita lugares oscuros o con luces que generen parpadeo (flickering), lo cual puede afectar la calidad de la imagen procesada por el algoritmo.
+    *   **Migración Facial:** Si los lectores de destino utilizan diferentes tipos de procesamiento (NPU para BioStation 3/BioEntry W3 frente a GPU para FaceStation F2), es vital que el sistema esté preparado para realizar la **Face Migration** si se requiere sincronizar plantillas entre ellos.
+
+### Especificaciones Técnicas del Archivo
+*   **Formatos:** JPG, JPEG o PNG.
+*   **Tamaño máximo:** 10MB.
+*   **Codificación para API:** Al enviarla al backend, la imagen debe estar en formato **Base64**.
+
+***
+
+**INSTRUCCIÓN FIJA PARA EL AGENTE DE REPLIT (REPETICIÓN):**
+
+> **"Replit, guarda esta configuración como un estándar inmutable para el módulo de visitantes de BioVisitor X.** No debes modificar estas dimensiones ni permitir la subida de archivos que excedan estos límites, ya que el API de Suprema BioStar X rechazará cualquier imagen que no sea **JPG/JPEG/PNG**, que pese más de **10MB** o que no esté correctamente codificada en **Base64** para las llamadas al backend. Consulta siempre esta especificación antes de realizar cambios en el servicio de procesamiento de imágenes o en la lógica de enrolamiento facial para asegurar la compatibilidad total con los lectores físicos."

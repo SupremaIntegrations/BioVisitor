@@ -1,0 +1,55 @@
+Ahora necesitamos implementar la lógica de enrolamiento de credenciales (Código QR y Rostro Visual) en el backend (NestJS) al momento de registrar un visitante en BioStar 2. Debes seguir estrictamente este flujo de 2 pasos para cada tipo de credencial:
+1. Implementación de Código QR Dinámico (Barcode/QR): Paso 1: Enrolar la tarjeta (POST /api/cards). Debes enviar el valor del código QR generado por nuestro motor (UUID o string numérico) a BioStar 2, indicando en el payload que el card_type.id es 6 (QR/Barcode estándar) o 7 (BioStar 2 QR)
+. Payload requerido:
+{
+  "CardCollection": {
+    "rows": [
+      {
+        "card_id": "VALOR_STRING_DEL_QR",
+        "card_type": {
+          "id": "6",
+          "type": "6"
+        }
+      }
+    ]
+  }
+}
+Paso 2: Asignar al visitante. La llamada anterior retornará un 200 OK con un id interno asignado por la base de datos de BioStar
+. Guarda este id. Al crear o actualizar el usuario visitante (POST /api/users o PUT /api/users/:id), inyecta este ID en el array de tarjetas
+:
+{
+  "User": {
+    "cards": [
+      { "id": "ID_RETORNADO_EN_EL_PASO_ANTERIOR" }
+    ]
+  }
+}
+2. Implementación de Rostro Visual (Visual Face para FaceStation F2 / BioStation 3): Paso 1: Extraer los templates biométricos de la fotografía (PUT /api/users/check/upload_picture). Cuando el visitante suba su 'selfie' desde el Frontend, envía la imagen en Base64 a BioStar 2 para que su motor valide la calidad y genere los templates biométricos
+. Payload requerido:
+{
+  "template_ex_picture": "CADENA_BASE64_DE_LA_FOTO_AQUI"
+}
+Paso 2: Asignar los templates al visitante. La llamada anterior retornará un JSON con la imagen normalizada y un array con los templates biométricos generados
+. Debes mapear esta respuesta y enviarla en el nodo credentials.visualFaces durante la creación del usuario (POST /api/users)
+. Estructura exacta dentro del objeto User:
+{
+  "User": {
+    "credentials": {
+      "visualFaces": [
+        {
+          "template_ex_normalized_image": "BASE64_NORMALIZADO_DEVUELTO",
+          "templates": [
+            {
+              "credential_bin_type": "5",
+              "template_ex": "CADENA_TEMPLATE_DEVUELTA"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+(Asegúrate de iterar y pasar todos los templates que el paso 1 haya devuelto en el array)
+.
+Manejo de Errores (Validación y Logger): Asegúrate de capturar los errores 400 Bad Request
+. Si envías un payload con una estructura incorrecta o el Base64 de la foto no cumple con los requisitos mínimos de calidad (iluminación, rostro no detectado), BioStar 2 rechazará la petición. Si esto ocurre en el Paso 1 de Visual Face, el backend debe retornar un error 422 Unprocessable Entity al frontend de Next.js para indicarle al visitante que debe tomarse una nueva foto.

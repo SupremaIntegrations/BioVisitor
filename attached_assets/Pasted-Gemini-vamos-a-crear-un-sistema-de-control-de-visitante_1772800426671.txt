@@ -1,0 +1,64 @@
+Gemini, vamos a crear un sistema de control de visitantes para que nuestros clientes puedan integrarlo con nuestra plataforma BioStar 2 y BioStar X vía API, se deberá incluir todos los llamados a API para que pueda integrarse de la forma más optima con BioStar 2 y BioStar X. El Sistema de control de visitantes queremos que recopile todas las necesidades a nivel mundial que los usuarios de sistemas de controles de visitantes más usan y más solicitan para sus empresas. Queremos que el sistema contemple los mejores y más altos niveles de seguridad y cyberseguridad ya que deseamos que nuestro sistema de control de visitantes trabaje de forma segura en todos los sitios de los clientes. El sistema de control de visitantes deberá permitir que los visitantes se puedan registrar a través de una recepción con una persona a la que le puedan indicar sus datos y quien pueda desde su puesto de recepción poder enrolar el rostro del usuario a través de los lectores Suprema de reconocimiento facial, enrolar la huella dactilar, a través de los lectores de reconocimiento facial o enroladores de huella dactilar, enrolar una tarjeta RFID a través de los lectores de tarjeta de Suprema o de terceros que se puedan vincular vía USB al PC de recepción. También se deberán vincular dispositivos que brinder una excelente experiencia al visitante, operador y administrador del sistema de control de visitantes como por ejemplo poder tomar la foto del visitante a través de una cámara web, poder vincular una impresora de stickers para imprimir una credencial del usuario como identificación, poder vincular lector de pasaportes para aquellos visitantes que sean extranjeros. Se podrá vincular un lector que permita captura el código de barras o código QR de los DNI de los usuarios y hacer un llenado automático de los campos que se encuentren del visitante en su documento como por ejemplo número de identificación del usuario, nombre del usuarios, apellidos del usuario, etc. Adicional a que el sistema de control de visitantes ofrezca la posbilidad de que un usuario se dirija a la recepción para hacer su registro y desde allí le habiliten el ingreso, también deberá existir la opción de que los usuarios que agenden una visita en un portal de pre-registro por ejemplo, puedan enviar automaticamente a su visitante un link de pre-registro en donde el usuario visitante completará un formulario con su información personal como nombre, identificación, fecha de nacimiento, verificación de la fecha y hora agendada por la persona que va a visitar, que salga el nombre de la persona a la que va a visitar, el nombre de la empresa y departamento al que pertence, así mismo que desde este portal de pre-registro el visitante pueda tomar una fotografía de su rostro desde su teléfono móvil o cargar una fotografía para que esta sea sincronizada con el sistema de control de visitantes central y en el momento que el visitante llegue a las instalaciones pueda validarse en recepción y tener su información pre-cargada para que la persona de recepción pueda hacer el checkin. El sistema de control de visitantes deberá permitir que cuando el usuario visitante salta de las instalaciones se realice un checkout automático del sistema de control de visitantes, el checkout automático deberá eliminar automáticamente al usuario dentro del sistema de BioStar 2 y BioStar X para que este a su vez pueda eliminarlo de los lectores, ya que los lectores cuenta con una capacidad máxima de almacenamiento de usuarios. Se deberá permitir también la opción de que el sistema de control de visitantes permita el acceso a través de código QR dinámico, el sistema de control de visitantes deberá tener la capacidad de poder generar un código QR dinámico y enviarlo al correo electrónico del visitante con un periodo de expiración configurable y que una vez se utilice, este no permita el acceso de el mismo u otro visitante mediante el mismo código QR que ha sido utilizado, se deberá incluir todo lo necesario para hacer un sistema de control de visitantes con código QR dinámico optimo y amigable con el administrador, operador y visitante. También desde el portal de pre-registro en caso de ser a través de código QR el visitante recibirá un código QR dinámico, debemos buscar las mejores formas de poderlo integrar para que sea dinámico cada x periodo de tiempo y se evite que el QR se comparta e ingresen personas no autorizadas. Se deberá contemplar un sistema de reportería que cumpla con los difererentes reportes más solicitados y usados a nivel mundial que permita al adminsitrador del sistema de control de visitas exportar sus reportes vía CSV, descarga PDF, envío a correo electrónico. Se deberán contemplar bases de datos de usuarios robustas que sean las más optimas, amigables, rápidas a nivel mundial. Este sistema deberá integrarse con BioStar 2 API y BioStar X API, te estoy adjuntando 2 cuadernos de mi NotebookLM en donde he cargado las fuentes tanto de BioStar 2 API como de BioStar 2 X, también te adjunto un documento con información sobre detalles de cyberseguridad para que revises y crees con los mejores protocolos de seguridad, encriptación, transmisión, almacenamiento. Contempla los líneamientos de marca Suprema como lo son logos, tamaños, tipos de fuentes, color de fuentes que adjunto para el diseño.
+Como ingeniero de arquitectura de software senior, mi recomendación para desarrollar soluciones que se integren con **BioStar X** depende del tipo de sistema que estés construyendo. Dado que la plataforma BioStar X es una infraestructura de seguridad integrada basada en IA y análisis de video, la elección debe priorizar la **seguridad**, la **concurrencia** y la **estabilidad**.
+
+A continuación, detallo las mejores opciones basadas en la naturaleza de la API de BioStar X, que es de tipo **JSON-REST** y requiere comunicaciones seguras vía **HTTPS**:
+
+### 1. Opción de Alta Agilidad: TypeScript + Node.js
+Esta es la opción ideal si necesitas construir paneles de control (dashboards) en tiempo real o servicios de integración rápida.
+*   **Frameworks recomendados:** **NestJS** (para el backend) o **Express**.
+*   **Por qué:** BioStar X utiliza servicios de **WebSocket** para comunicación bidireccional y está optimizado para entornos web modernos. Node.js maneja excepcionalmente bien las operaciones asíncronas de entrada/salida (I/O), lo cual es crítico cuando haces múltiples llamadas a la API para gestionar miles de usuarios o dispositivos.
+*   **Soporte:** Las fuentes incluyen múltiples ejemplos de código para Node.js utilizando librerías como **Axios** o **Fetch**.
+
+### 2. Opción Corporativa y Robusta: C# / .NET
+Dado que BioStar X está diseñado para ejecutarse nativamente en entornos **Windows Server** y se integra profundamente con **Active Directory**, el ecosistema de Microsoft es una elección lógica.
+*   **Framework recomendado:** **.NET 8+ (ASP.NET Core)**.
+*   **Por qué:** Ofrece un rendimiento de nivel empresarial y una integración perfecta si tu solución también debe interactuar con los servidores donde reside BioStar X. Además, BioStar X utiliza **gRPC** internamente para comunicaciones de alto rendimiento, un protocolo que .NET maneja de forma excelente.
+*   **Soporte:** La documentación provee ejemplos detallados usando `HttpClient` y `RestSharp` para C#.
+
+### 3. Opción para Análisis de Datos y Automatización: Python
+Si tu objetivo es procesar grandes volúmenes de eventos, generar reportes personalizados o interactuar con los modelos de IA de la plataforma.
+*   **Librerías recomendadas:** **FastAPI** (para APIs de alto rendimiento) o **Pytest** para automatización de pruebas.
+*   **Por qué:** Python es el lenguaje estándar para la ciencia de datos y la IA. Dado que BioStar X genera una gran cantidad de registros de auditoría y eventos térmicos o de video, Python facilitará enormemente la creación de scripts de análisis.
+*   **Soporte:** Las fuentes proporcionan ejemplos funcionales usando la librería `Requests`.
+
+### Consideraciones Arquitectónicas Clave (Senior Level):
+
+*   **Gestión de Sesiones:** Independientemente del lenguaje, tu arquitectura debe implementar un manejador robusto para el `bs-session-id`. Este token es obligatorio en el encabezado (header) de cada solicitud tras el login.
+*   **Seguridad:** Toda comunicación **debe ser HTTPS**. Debes prever la instalación de certificados SSL/HTTPS para evitar advertencias de seguridad y asegurar la conectividad.
+*   **Escalabilidad Distribución:** BioStar X soporta hasta 1,000 dispositivos por servidor de comunicación y hasta 3,000 en entornos distribuidos. Tu software debe estar diseñado para ser **stateless** (sin estado) para poder escalar horizontalmente junto con la infraestructura de Suprema.
+*   **Manejo de Archivos:** Si planeas realizar importaciones masivas de usuarios, asegúrate de que tu framework maneje bien las peticiones `multipart/form-data` para subir archivos `.csv` o `.tgz` al servidor.
+
+En resumen: usa **TypeScript/NestJS** para velocidad y web, **C#/.NET** para robustez en servidores Windows, o **Python** si el foco es el tratamiento de datos y automatización de procesos de IA.
+Para crear un prototipo funcional de este calibre, el prompt debe ser extremadamente preciso, actuando como un pliego de condiciones técnicas. He diseñado este prompt siguiendo tu recomendación de arquitectura **Senior** y utilizando el enfoque de **Alta Agilidad (NestJS + TypeScript)**, ya que es el más versátil para dashboards en tiempo real y manejo de WebSockets.
+
+Copia y pega el siguiente bloque en tu agente de IA:
+
+---
+
+# PROMPT: Desarrollo de Prototipo Funcional - VMS Suprema (BioStar 2 & BioStar X)
+
+**Rol:** Actúa como un **Principal Full-Stack Engineer** especializado en integraciones de sistemas de seguridad y biometría.
+
+**Objetivo:** Construir un prototipo funcional (MVP) de un **Sistema de Gestión de Visitantes (VMS)** que sea agnóstico y se conecte a **BioStar 2** o **BioStar X** mediante sus respectivas APIs REST/JSON, bajo una arquitectura robusta, segura y siguiendo los lineamientos de marca de Suprema.
+
+## 1. Stack Tecnológico Mandatorio
+
+* **Backend:** Node.js con **NestJS** (Arquitectura modular, escalable y stateless).
+* **Lenguaje:** TypeScript (Tipado estricto para modelos de API).
+* **Base de Datos:** PostgreSQL (para persistencia de visitantes) y Redis (para gestión de tokens de QR Dinámico y caché de `bs-session-id`).
+* **Frontend:** React o Next.js (Dashboard administrativo y portal de pre-registro).
+* **Comunicación API:** Axios con interceptores para manejo de sesiones.
+
+## 2. Flujos Lógicos a Programar (Paso a Paso)
+
+### Paso 1: Módulo de Autenticación Unificado
+
+* Implementar un `AuthService` que maneje el login según la plataforma seleccionada.
+* **BioStar 2:** Obtener y refrescar el `bs-session-id` vía `POST /api/login`. Almacenarlo de forma segura en el header de cada petición.
+* **BioStar X:** Implementar el flujo de autenticación basado en la arquitectura de microservicios local.
+
+### Paso 2: Portal de Pre-Registro y Registro en Recepción
+
+* **Captura de Identidad:** Formulario para datos personales (OCR Ready) y carga de fotografía.
+* **Enrolamiento Biométrico:** Implementar lógica para llamar a los endpoints de enrolamiento de Suprema (`/api/users/face` o `scan_fingerprint`).
+* **Validación de Marca:** La UI debe usar los colores **Infinite Burgundy** (RGB 161, 41, 68) y **Classy Gray** (

@@ -1,0 +1,49 @@
+# ═══════════════════════════════════════════════════════════════════
+# BioVisitor X - Docker Compose (Desarrollo)
+# ═══════════════════════════════════════════════════════════════════
+# Levanta PostgreSQL y Redis para desarrollo local.
+# Ejecutar: docker-compose up -d
+# ═══════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL para persistencia de visitantes, visitas y auditoría
+  postgres:
+    image: postgres:16-alpine
+    container_name: biovisitor-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: biovisitor_x
+      POSTGRES_USER: biovisitor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biovisitor_dev_password}
+    ports:
+      - '5432:5432'
+    volumes:
+      - biovisitor-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U biovisitor -d biovisitor_x']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para caché de sesiones, tokens QR dinámicos y colas Bull
+  redis:
+    image: redis:7-alpine
+    container_name: biovisitor-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - biovisitor-redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  biovisitor-pgdata:
+    name: biovisitor-pgdata
+  biovisitor-redisdata:
+    name: biovisitor-redisdata

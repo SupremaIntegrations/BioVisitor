@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "qDqYCNKpUtVKLeRWuX4w4"
+uri = "file://FREQUENT_VISITORS_SPEC.md"
+type = "text"
+title = "Especificación Técnica — Módulo Visitantes Frecuentes v2.0"

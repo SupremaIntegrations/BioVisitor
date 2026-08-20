@@ -1,0 +1,38 @@
+"Actúa como un desarrollador Full-Stack Senior experto en NestJS 11, Next.js 16, PostgreSQL y Tailwind CSS v4
+. Tu objetivo es desarrollar el nuevo Módulo de Operadores para el VMS BioVisitor X, el cual actualmente carece de una interfaz para gestionar usuarios con roles ADMIN y OPERATOR
+.
+Debes crear la arquitectura de base de datos, los endpoints del backend y la interfaz del frontend siguiendo estas especificaciones exactas:
+1. Vistas y Componentes del Frontend (Next.js):
+Crea una página en /dashboard/settings/operators que sea accesible estrictamente solo por usuarios con rol ADMIN
+.
+Implementa una tabla de datos que muestre: nombre, email, rol, estado (activo/inactivo) y fecha de creación
+.
+Crea un formulario (Modal o Drawer) para la creación y edición de operadores
+. El formulario base debe requerir: nombre completo, email corporativo, rol (ADMIN | OPERATOR) y contraseña temporal
+.
+Incluye botones de acción por registro para: editar datos, cambiar rol, activar/desactivar cuenta y forzar el reseteo de contraseña
+.
+2. Granularidad de Permisos y Segmentación (Backend y Frontend):
+Implementa una matriz de permisos basada en roles y atributos (RBAC/ABAC). Para los usuarios OPERATOR, debe existir una configuración granular que defina exactamente qué módulos pueden ver o editar (ej. recepción vs. seguridad)
+.
+Añade selectores para Segmentación Lógica: Permite asignar a qué sedes, edificios o particiones específicas tiene acceso el operador, ocultando los visitantes y el hardware (puertas/terminales) de otras sedes
+.
+3. Configuraciones de Ciberseguridad Opcionales (¡CRÍTICO!): En el formulario de creación/edición del operador, debes añadir una pestaña o sección de 'Seguridad Avanzada'. Todas estas características deben ser opcionales (toggles/checkboxes) y venir deshabilitadas por defecto para no bloquear el flujo rápido de creación de un operador
+. Si el ADMIN decide habilitarlas, debe poder configurar:
+Autenticación Fuerte: Toggle para exigir Autenticación Multifactor (MFA) obligatoria en el próximo inicio de sesión del operador o forzar el login vía SSO (SAML 2.0 / OAuth2)
+.
+Políticas de Contraseña: Toggles para forzar complejidad alta, expiración periódica de la contraseña y límite de intentos fallidos antes del bloqueo
+.
+Gestión de Sesión: Campos numéricos para definir el tiempo de inactividad (timeout) antes de cerrar la sesión automáticamente y un límite de sesiones concurrentes
+.
+Restricciones de Red (Geofencing): Un campo para ingresar una 'IP Allowlist' (lista blanca de IPs corporativas o VPN) desde donde este operador tiene permitido iniciar sesión
+.
+4. Backend y Auditoría Inmutable (NestJS):
+Modifica o crea la entidad user.entity.ts
+ para soportar los nuevos campos de permisos granulares y los flags de ciberseguridad opcionales mencionados.
+Crea los endpoints protegidos bajo /api/v1/users o /api/v1/operators para el CRUD completo
+.
+Pistas de Auditoría (Audit Logs): Cada acción de creación, modificación de permisos o cambio en las configuraciones de seguridad de un operador debe registrarse de manera inmutable en el módulo de auditoría existente. El log debe capturar: Quién lo hizo (ID y nombre del ADMIN), Qué hizo, Desde dónde (IP), Cuándo (Timestamp UTC), y estrictamente los Valores de Transición (el valor anterior y el nuevo valor, ej: de 'MFA: false' a 'MFA: true')
+.
+Asegúrate de que el diseño use la paleta de colores corporativa (Suprema-burgundy)
+ y de manejar todos los estados de la UI (Carga, Error, Éxito, Vacío). Entrega el código de las entidades, controladores, servicios y las vistas de React."

@@ -1,0 +1,30 @@
+Actúa como un Desarrollador Senior Full-Stack experto en NestJS, Next.js, TypeScript y visión artificial. 
+
+Necesito que refactorices el flujo de procesamiento de fotografía facial (Visual Face) en nuestra aplicación BioVisitor X, implementando un pipeline híbrido (Opción C) donde el frontend detecta el rostro y el backend recorta y normaliza la imagen de forma segura antes de enviarla a una API externa estricta (Suprema BioStar 2).
+
+Sigue EXACTAMENTE estas instrucciones críticas:
+
+**1. FRONTEND (Next.js - RegisterWalkInModal.tsx):**
+- Utiliza `face-api.js` para detectar el rostro en la imagen capturada (ya sea por webcam o archivo subido).
+- Extrae el objeto `detection.box` (que contiene `x`, `y`, `width`, `height`).
+- Modifica el payload que se envía al backend en el POST `/api/v1/visitors`. Ahora debe enviar:
+  ```json
+  {
+    "photoBase64": "data:image/jpeg;base64,...",
+    "faceBox": { "x": 100, "y": 50, "width": 200, "height": 200 }
+  }
+Si face-api.js no detecta un rostro, bloquea el envío y muestra un estado de error (Alert component) indicando "Rostro no detectado".
+2. BACKEND (NestJS - visitors.service.ts / Image Processor):
+Instala e importa la librería sharp para el procesamiento de imágenes server-side.
+Crea un método processVisualFace(photoBase64: string, faceBox: any): Promise<string> con la siguiente lógica matemática estricta: a. Limpia el string base64 eliminando el prefijo data:image/...;base64,. b. Convierte el string a Buffer. c. Calcula el nuevo bounding box añadiendo un 30% de padding (margen) alrededor del rostro para asegurar que el motor biométrico externo pueda extraer el template correctamente. Fórmula sugerida:
+paddingX = faceBox.width * 0.30
+paddingY = faceBox.height * 0.30
+newX = Math.max(0, faceBox.x - paddingX)
+newY = Math.max(0, faceBox.y - paddingY)
+newWidth = Math.min(imageWidth - newX, faceBox.width + (paddingX * 2))
+newHeight = Math.min(imageHeight - newY, faceBox.height + (paddingY * 2)) d. Usa sharp(buffer).extract({ left: newX, top: newY, width: newWidth, height: newHeight }). e. Redimensiona la imagen recortada a width: 600, height: 800 usando fit: 'inside' o fit: 'cover'. f. Comprime la imagen a formato JPEG con calidad 85 (.jpeg({ quality: 85 })) para garantizar que el archivo final sea liviano (por debajo del límite de 10MB de la API externa). g. Retorna el nuevo string Base64 puro (sin prefijo).
+3. BACKEND - VALIDACIÓN DEFENSIVA (shared/schema.ts):
+Crea un esquema de Zod para validar el payload entrante, asegurando que faceBox tenga propiedades numéricas válidas y que photoBase64 sea un string.
+Maneja los posibles errores de sharp (ej. si las coordenadas salen del límite de la imagen original por errores de redondeo) usando bloques try/catch y logs estructurados (ej. INFO: AUDIT: CROP_FAILED).
+Criterios de Aceptación: ✅ El backend nunca confía en el recorte visual del frontend, sino que usa las coordenadas para hacer el crop autoritativo con sharp. ✅ La imagen resultante es un JPEG puro en Base64, con un margen amplio que muestra el rostro completo y parte del cuello. ✅ El código compila sin errores de TypeScript y maneja adecuadamente los límites (clamp) para evitar que el padding intente recortar fuera de las dimensiones reales de la imagen.
+Por favor, genera el código actualizado para el Frontend y el Backend siguiendo esta especificación.

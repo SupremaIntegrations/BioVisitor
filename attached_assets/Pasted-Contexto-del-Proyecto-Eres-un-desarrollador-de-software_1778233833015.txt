@@ -1,0 +1,38 @@
+Contexto del Proyecto: Eres un desarrollador de software Senior construyendo BioVisitor X, un Sistema de Gestión de Visitantes (VMS) Enterprise en entorno web (Next.js/React y Node.js/NestJS).
+Objetivo: Implementar un módulo de "Impresión de Credenciales Físicas" (Gafetes) que se active automáticamente o a demanda al finalizar el flujo de check-in de un visitante
+. Este gafete es una herramienta de seguridad física vital para la validación visual en entornos corporativos
+.
+Debes desarrollar esta funcionalidad siguiendo estrictamente estas 5 directrices técnicas y de seguridad:
+1. Interfaz de Usuario (UI) y Flujo de Impresión
+Botón de Acción: En la vista de "Detalle del Visitante" o al finalizar el "Check-in", agrega un botón primario llamado [🖨️ Imprimir Gafete].
+Modal de Previsualización: Al hacer clic, debe abrirse un Modal que renderice un "Preview" exacto de cómo se verá la etiqueta impresa.
+Selección de Impresora: El modal debe incluir un selector de impresoras. Dado que es una aplicación web, debes implementar una solución basada en el diálogo de impresión nativo del navegador (window.print()), pero optimizada estrictamente para impresoras térmicas de etiquetas de red o USB
+.
+2. Diseño del Gafete (Template de Seguridad)
+El diseño no es un simple ticket, es una credencial de seguridad. Crea un componente React (ej. <BadgeTemplate />) con un tamaño fijo para etiquetas estándar de la industria (ej. formato 62mm x 100mm o 4" x 3"). Debe incluir de forma obligatoria y legible:
+Fotografía del Visitante: La imagen capturada en el pre-registro o en el kiosco de recepción
+. (Resolución ajustada para impresión en blanco y negro).
+Identidad: Nombre completo del visitante en tipografía grande y destacada
+.
+Empresa de Origen: Debajo del nombre
+.
+Anfitrión (Host): Texto "Visita a: [Nombre del Host]"
+.
+Metadatos de Seguridad: Fecha y hora exacta de emisión (timestamp)
+.
+Código QR Dinámico: El mismo código QR que el visitante usa para abrir los torniquetes de Suprema. Este QR impreso servirá para que el visitante pueda hacer "Check-out" escaneándolo en el lector de salida al retirarse
+.
+3. Configuración de CSS para Impresión Térmica
+Optimización de Impresión: Las corporaciones utilizan impresoras térmicas certificadas (como Brother QL-820NWB, Zebra ZD420 o Dymo LabelWriter)
+. Utiliza reglas CSS @media print para asegurar que el componente:
+No imprima encabezados, pies de página ni URLs del navegador (@page { margin: 0; }).
+Tenga dimensiones exactas de etiqueta (ej. width: 62mm; height: 100mm;).
+Fuerce colores en escala de grises de alto contraste para evitar que el código QR se imprima borroso y los lectores de Suprema fallen al leerlo.
+4. Eventos y Trazabilidad (Auditoría Forense)
+Registro de Emisión: Imprimir un gafete es otorgar un permiso físico temporal. Cada vez que el botón de impresión se ejecute con éxito, debes registrar un evento asíncrono en la base de datos de PostgreSQL dentro de la tabla AuditLog.
+El payload del log debe decir: Acción: IMPRESIÓN_GAFETE, asociado al visitor_id, operador_id y el timestamp. Esto es evidencia para auditorías ISO 27001 que demuestra cuándo y quién emitió la credencial física.
+5. Lógica Opcional de "Auto-Impresión"
+Añade un toggle (interruptor) en la configuración del sistema llamado "Auto-imprimir gafete tras Check-in". Si está activado, la invocación al diálogo de impresión debe dispararse automáticamente al confirmar la llegada del visitante al edificio, eliminando clics innecesarios para el recepcionista.
+
+--------------------------------------------------------------------------------
+Instrucción Final de Arquitectura para el Agente: "Escribe el código asegurando que el componente de impresión (BadgeTemplate) esté aislado del resto del DOM para que el diálogo window.print() solo capture la etiqueta. Utiliza librerías como react-to-print para facilitar la inyección del componente React directamente a la cola de impresión del sistema operativo del recepcionista."

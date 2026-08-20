@@ -1,0 +1,48 @@
+Actúa como un equipo de desarrollo multidisciplinario (Arquitecto, Full-Stack Dev, SecOps y QA) experto en Next.js 16, NestJS 11 y ciberseguridad
+. Necesito implementar el componente VisitorPhotoCapture.tsx para el sistema 'BioVisitor X', el cual se integra con Suprema BioStar 2
+.
+Objetivo: Crear un módulo de captura fotográfica por WebCam para el registro de visitantes que procese la imagen en el lado del cliente (Edge Computing) y cumpla con estrictas normas de privacidad por diseño
+.
+Requerimientos de Seguridad y Privacidad (SecOps):
+Consentimiento Explícito: Antes de inicializar la cámara, muestra un aviso de privacidad simplificado. La cámara solo debe encenderse tras el clic del usuario aceptando los términos
+.
+Liveness Detection Básico: Para evitar 'Presentation Attacks' (fotos impresas o pantallas), implementa un chequeo básico de movimiento o parpadeo antes de habilitar el botón de 'Capturar'
+.
+Minimización de Datos: La imagen en Base64 debe viajar cifrada en el payload HTTPS y purgarse de la memoria del navegador inmediatamente después de la subida
+. El backend no debe guardar permanentemente la foto si no es estrictamente necesario
+.
+Instrucciones para el Frontend (Next.js 16 + Tailwind v4):
+Utiliza react-webcam o la API nativa navigator.mediaDevices para acceder a la cámara
+. Maneja con elegancia el caso en el que el usuario rechace los permisos de la cámara
+.
+Agrega un botón 'Habilitar Cámara' con un ícono de seguridad
+.
+La interfaz de la cámara debe mostrar un círculo de encuadre (overlay) para asegurar que el rostro del visitante quede centrado
+. Debajo del feed, incluye un mensaje estático de 'Consentimiento de Tratamiento de Datos Biométricos'
+.
+Crea un botón 'Tomar Foto' que genere un Canvas, ajuste la resolución a 640 x 480 px (para optimizar ancho de banda) y convierta el frame a un string Base64
+.
+Valida que el tamaño final sea inferior a 2MB y el formato sea JPEG o PNG
+.
+Muestra una previsualización de la foto capturada con un botón para 'Repetir'
+.
+Al desmontar el componente, asegúrate de apagar la cámara ejecutando track.stop()
+.
+Instrucciones para el Backend (NestJS 11):
+Modifica el DTO del controlador de visitantes para recibir la propiedad photo
+.
+Implementa un middleware de seguridad que escanee el payload Base64 para evitar inyección de scripts (Malicious Image Payloads)
+.
+El servicio SupremaSyncService debe recibir el Base64, convertirlo a buffer (o mantenerlo en Base64 según requiera el API) y orquestar el envío hacia BioStar 2
+."
+
+--------------------------------------------------------------------------------
+💡 Nota de Experto (Soporte Nivel III a Nivel II)
+En la documentación que me compartiste, se menciona que el backend debe enviar la foto al endpoint POST /users/{id}/photo de BioStar 2
+. Como experto en la API, te hago una aclaración vital para que tu integración no falle:
+Si el objetivo de esta foto es únicamente usarla como foto de perfil en el dashboard de BioStar 2, el endpoint correcto de la nueva API Local es PUT /api/users/:id, inyectando el string en el parámetro photo del objeto User
+.
+Si el objetivo es utilizar esta captura como una Credencial de Reconocimiento Facial Visual (Visual Face) para que el visitante abra puertas en lectores como FaceStation F2 o BioStation 3, el flujo es diferente: primero debes enviar el Base64 al endpoint PUT /api/users/check/upload_picture para que BioStar 2 extraiga los vectores biométricos, y luego asignar esos templates al usuario mediante PUT /api/users/:id
+. ¡Las fotos para Visual Face pueden pesar hasta 10MB!
+.
+Asegúrate de definir con tu agente cuál de estos dos alcances (o ambos) tendrá la fotografía capturada. ¡Avísame cómo te va con la generación de este componente!

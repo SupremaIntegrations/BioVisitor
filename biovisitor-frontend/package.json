@@ -1,0 +1,35 @@
+{
+  "name": "biovisitor-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5000 -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -p 5000 -H 0.0.0.0",
+    "lint": "eslint",
+    "build:prod": "next build --webpack",
+    "build:standalone": "npm run build:prod && node -e \"const fs=require('fs');fs.cpSync('.next/static','.next/standalone/.next/static',{recursive:true});fs.cpSync('public','.next/standalone/public',{recursive:true})\""
+  },
+  "dependencies": {
+    "axios": "^1.18.1",
+    "face-api.js": "^0.22.2",
+    "lucide-react": "^0.577.0",
+    "next": "^16.2.11",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-to-print": "^3.3.0",
+    "react-webcam": "^7.2.0",
+    "recharts": "^3.10.0",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.11",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

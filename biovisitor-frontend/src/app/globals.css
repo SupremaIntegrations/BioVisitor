@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  /* Suprema Brand Colors */
+  --color-suprema-burgundy: #971B2F;
+  --color-suprema-burgundy-light: #B42940;
+  --color-suprema-burgundy-dark: #701020;
+  
+  /* Suprema Gray Scale (Classy Gray) */
+  --color-suprema-gray-50:  #F9FAFB;
+  --color-suprema-gray-100: #F3F4F6;
+  --color-suprema-gray-200: #E5E7EB;
+  --color-suprema-gray-300: #D1D5DB;
+  --color-suprema-gray-400: #9CA3AF;
+  --color-suprema-gray-500: #6B7280;
+  --color-suprema-gray-600: #4B5563;
+  --color-suprema-gray-700: #374151;
+  --color-suprema-gray-800: #1F2937;
+  --color-suprema-gray-900: #111827;
+
+  /* Fonts */
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Force light mode always — this is a corporate VMS, not a consumer app */
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+  color-scheme: light only;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Global form element contrast ─────────────────────────────────────────── */
+/* Baseline: every input/select/textarea always has dark text on white.        */
+/* !important is intentional — prevents OS dark-mode browser defaults and      */
+/* unintentional inheritance from ancestor CSS variables from overriding.      */
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9CA3AF !important;
+  -webkit-text-fill-color: #9CA3AF !important;
+  opacity: 1;
+}
+
+/* Override for inputs that explicitly need white text (e.g. on dark backgrounds) */
+input.force-white,
+select.force-white,
+textarea.force-white {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Disabled / locked fields keep a readable gray */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  color: #4B5563 !important;
+  -webkit-text-fill-color: #4B5563 !important;
+}
+
+/* ── Scrollbar styling ─────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #9CA3AF #F3F4F6;
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+}
+::-webkit-scrollbar-thumb {
+  background: #9CA3AF;
+  border-radius: 6px;
+  border: 2px solid #F3F4F6;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: #F3F4F6;
+}

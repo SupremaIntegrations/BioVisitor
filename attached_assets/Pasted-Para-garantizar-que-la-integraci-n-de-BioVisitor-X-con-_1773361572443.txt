@@ -1,0 +1,23 @@
+Para garantizar que la integración de **BioVisitor X** con el API de **Suprema BioStar X** funcione correctamente y evitar errores de procesamiento o rechazos por parte del servidor, la configuración de la fotografía debe seguir estrictamente estas especificaciones técnicas:
+
+### 1. Especificaciones de Archivo
+*   **Formatos Soportados:** Únicamente archivos con extensión **JPG, JPEG o PNG**.
+*   **Tamaño Máximo de Archivo:** El archivo no debe superar los **10MB**.
+*   **Requisito de API (Backend):** Al enviar la imagen a través del API (endpoints como `POST /api/users` o `PUT /api/users/check/upload_picture`), la imagen debe estar codificada en formato **Base64**.
+
+### 2. Calidad y Composición de la Foto (Visual Face)
+Para que el algoritmo de reconocimiento facial de Suprema genere los templates correctamente, la foto debe cumplir lo siguiente:
+*   **Posición:** La persona debe mirar **directamente a la cámara** sin mover la cabeza y mantenerla recta (ni levantada ni inclinada).
+*   **Encuadre:** Ambos **hombros deben ser visibles** en la imagen.
+*   **Distancia:** Se recomienda mantener una distancia de entre **60 cm y 100 cm** entre la cara y la cámara.
+*   **Expresión:** Mantener una expresión facial **neutral** (no sonreír ni gesticular).
+*   **Accesorios Prohibidos:** No se deben usar **máscaras, sombreros, gorras ni parches en los ojos**.
+*   **Maquillaje:** Evitar el maquillaje pesado o grueso que altere las facciones.
+*   **Ojos:** Deben estar completamente **abiertos**.
+*   **Sujetos:** Solo debe aparecer **una persona a la vez** en la pantalla.
+
+***
+
+**INSTRUCCIÓN FIJA PARA EL AGENTE DE REPLIT:**
+
+> **"Replit, guarda esta configuración como un estándar inmutable para el módulo de visitantes de BioVisitor X.** No debes modificar estas dimensiones ni permitir la subida de archivos que excedan estos límites, ya que el API de Suprema BioStar X rechazará cualquier imagen que no sea **JPG/JPEG/PNG**, que pese más de **10MB** o que no esté correctamente codificada en **Base64** para las llamadas al backend. Consulta siempre esta especificación antes de realizar cambios en el servicio de procesamiento de imágenes o en la lógica de enrolamiento facial."

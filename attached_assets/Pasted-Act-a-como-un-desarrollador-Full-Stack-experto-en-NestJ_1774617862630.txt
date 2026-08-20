@@ -1,0 +1,42 @@
+Actúa como un desarrollador Full-Stack experto en NestJS, Next.js, PostgreSQL y ciberseguridad empresarial. Necesito implementar un Módulo de Auditoría Forense Inmutable para 'BioVisitor X', un sistema integrado con la API de Suprema BioStar 2.
+Objetivo: Crear un registro detallado, centralizado y a prueba de manipulaciones (WORM - Write Once Read Many) que responda exactamente: Quién (Actor + IP), Cuándo (Timestamp UTC), Qué (Acción/Endpoint) y los Detalles Específicos (Valor anterior vs Valor nuevo).
+Instrucciones para el Backend (NestJS + TypeORM):
+Entidad de Base de Datos WORM (AuditLog):
+Crea una nueva entidad en PostgreSQL llamada audit_logs.
+RESTRICCIÓN CRÍTICA: A nivel de TypeORM y base de datos, esta tabla es de SOLO LECTURA Y ESCRITURA (Append-only). Bloquea cualquier operación UPDATE o DELETE.
+La estructura debe basarse en la siguiente interfaz estricta:
+timestamp: Fecha exacta en formato ISO-8601 UTC.
+event: Nombre de la acción (ej. VISITOR_PRE_REGISTER, UPDATE_HOST, LOGIN_ATTEMPT, EXPORT_CSV).
+status: 'success' | 'failure'.
+actor: Objeto JSON con { userId, username, ip, role }.
+resource: Identificador del recurso afectado (ej. visitor:12345).
+details: Objeto JSONB con el payload exacto. Si es una modificación, debe contener { previousValue, newValue } para saber qué cambió en detalle.
+Logger Estructurado (Pino):
+Implementa pino y pino-pretty. Crea un servicio global AuditService con un método auditLog(data: AuditEvent) que guarde en la BD e imprima el log estructurado en la consola
+.
+Registra automáticamente eventos críticos usando middlewares/interceptors
+. Extrae la IP real del usuario usando Trust proxy (X-Forwarded-For).
+Integración con BioStar 2 (Opcional en esta fase pero prepara el servicio):
+Crea un endpoint POST /api/v1/audit/biostar que consuma el endpoint de Suprema POST /api/audit/search usando el token bs-session-id
+.
+El payload de búsqueda debe soportar filtros para traer los campos DATE, USRID (Usuario), PERM (Nivel de operador), IP, TARGET, y CONTENT (modificación)
+. Valida la respuesta con Zod .passthrough()
+.
+Instrucciones para el Frontend (Next.js + Tailwind + shadcn/ui):
+Vista del SOC (Security Operations Center):
+Crea la página /dashboard/audit-trail accesible solo para el rol ADMIN.
+Implementa una tabla de datos avanzada usando TanStack Table y React Query para consumir /api/v1/audit/logs.
+Columnas de la Tabla y Formato:
+Cuándo: Muestra la fecha/hora. El backend enviará la fecha en UTC; debes convertirla dinámicamente a la zona horaria local del navegador del usuario usando date-fns o dayjs
+.
+Quién: Nombre de usuario y un badge (chip) gris con su dirección IP.
+Acción: Badge con código de colores (ej. Verde para success, Rojo para failure).
+Detalles (Expandible): Un botón que expanda la fila para mostrar un componente tipo 'Diff/JSON Viewer' visualizando claramente el previousValue vs newValue.
+Filtros y Búsqueda Global:
+Agrega Date Pickers para seleccionar rangos de fecha y selectores múltiples para filtrar por 'Tipo de Evento' o 'Actor'."
+
+--------------------------------------------------------------------------------
+💡 Nota Estratégica Adicional (Nivel III a Nivel II)
+Asegúrate de que en este registro de auditoría también se incluya el evento "Exportación de Datos" (EXPORT_CSV). En entornos altamente regulados, saber que un operador exportó masivamente la lista de visitantes (con correos y teléfonos) a un CSV es tan importante como saber quién abrió una puerta
+.
+Prueba este prompt y cuéntame si tienes dudas con los JSON de los payloads al leer la API de auditoría propia de BioStar 2. ¡Un excelente paso para asegurar BioVisitor X!

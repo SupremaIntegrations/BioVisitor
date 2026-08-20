@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Cómo estuvo tu visita? — BioVisitor X</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .wrapper {
+            max-width: 600px;
+            margin: 24px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 32px 40px;
+            text-align: center;
+            border-bottom: 4px solid #A12944;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.55);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .content {
+            padding: 32px 40px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .intro {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+        .checkout-time {
+            background: #f8f9fb;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #A12944;
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 14px 32px;
+            border-radius: 8px;
+            margin: 8px 0 28px 0;
+        }
+        .cta-wrap { text-align: center; }
+        .divider {
+            border-top: 1px dashed #e8eaed;
+            margin: 8px 0 28px 0;
+        }
+        .false-exit-card {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 20px 24px;
+        }
+        .false-exit-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #b91c1c;
+            margin-bottom: 8px;
+        }
+        .false-exit-card p {
+            font-size: 13px;
+            color: #7f1d1d;
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+        .false-exit-link {
+            display: inline-block;
+            background: #ffffff;
+            color: #b91c1c !important;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #b91c1c;
+        }
+        .footer {
+            background: #f8f9fb;
+            border-top: 1px solid #e8eaed;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            line-height: 1.8;
+        }
+        .footer a { color: #A12944; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h1>BioVisitor X</h1>
+            <p>Sistema de Gestión de Visitantes</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hola, <strong>{{visitorName}}</strong></p>
+            <p class="intro">
+                Registramos tu salida de nuestras instalaciones. Nos encantaría conocer tu opinión sobre la experiencia de tu visita.
+            </p>
+
+            <div class="checkout-time">
+                🕐 &nbsp;Salida registrada: <strong>{{checkedOutTime}}</strong>
+            </div>
+
+            <div class="cta-wrap">
+                <a href="{{surveyUrl}}" class="cta-button">Responder encuesta breve</a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="false-exit-card">
+                <h3>⚠️ ¿Sigues dentro de las instalaciones?</h3>
+                <p>
+                    Si tu salida se registró automáticamente pero en realidad todavía te encuentras en el edificio,
+                    repórtalo aquí para que un operador restablezca tu acceso temporalmente. Este enlace es válido por 1 hora.
+                </p>
+                <a href="{{falseExitUrl}}" class="false-exit-link">Reportar falsa salida</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Esta notificación fue generada automáticamente por <strong>BioVisitor X</strong>.</p>
+            <p>Si no realizaste esta visita, puedes ignorar este mensaje.</p>
+            <p style="margin-top:8px; color: #bbb;">© {{year}} BioVisitor X · Todos los derechos reservados</p>
+        </div>
+    </div>
+</body>
+</html>

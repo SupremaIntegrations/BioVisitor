@@ -1,0 +1,15 @@
+Actúa como un desarrollador Full-Stack experto en React, Tailwind CSS y diseño de interfaces 'Zero-Training'. Necesito construir la vista principal del Dashboard (SOC View) para 'BioVisitor X', un sistema de control de visitantes integrado en tiempo real con la API de control de acceso físico de Suprema (BioStar 2).
+Objetivo: Crear un panel de métricas (KPIs) interactivo, visualmente limpio y responsivo que le permita al operador y al administrador tomar decisiones basadas en datos y reaccionar a incidentes. El diseño debe usar códigos de color universales (Verde=OK, Rojo=Alerta, Ámbar=Pendiente).
+Requerimientos de los Componentes:
+Tarjetas de KPI Interactivas (Fila superior):
+Visitantes en Instalaciones (Mustering): Muestra el porcentaje y número real actual de visitantes dentro. Interactividad: Al hacer clic, abre un modal tipo 'Lista de Evacuación' con búsqueda en tiempo real.
+Alertas de Overstay (Tiempo Excedido): Tarjeta con fondo o borde rojo parpadeante si el valor es > 0. Muestra cuántos visitantes pasaron su hora de fin de vigencia sin marcar salida. Interactividad: Al hacer clic, filtra la tabla principal para mostrar solo estos visitantes.
+Tasa de Pre-registro: Porcentaje de visitantes del día que usaron el 'Magic Link' vs. Registro en sitio.
+Salud del Sistema BioStar 2: Indicador del estado del WebSocket (Online/Offline) y contadores de payload (SYNCED/PENDING/FAILED).
+Gráficos Interactivos (Fila central):
+Mapa de Calor de Afluencia (Día/Hora): Un gráfico (tipo bar chart o heatmap) que muestre los picos de entradas. Interactividad: Debe tener un selector desplegable (dropdown) en la esquina superior derecha del componente para cambiar el rango dinámicamente (Hoy, Últimos 7 días, Este mes, Personalizado). Al hacer clic en una barra o cuadro, debe actualizar las métricas globales para reflejar solo ese bloque de tiempo.
+Distribución por Propósito de Visita / Tipo de Visitante: Gráfico de dona (Doughnut chart) mostrando motivos (Reunión, Contratista, Proveedor, Logística).
+Lógica y Manejo de Estados:
+Utiliza el estado global o la URL (query parameters) para mantener la sincronización de los filtros cuando se hace clic en una tarjeta KPI.
+Considera que los datos provienen de endpoints REST (GET /api/v1/reports/visits) que retornan fechas en formato ISO-8601 UTC. Asegúrate de formatear correctamente las horas a la zona horaria local del navegador del usuario.
+Por favor, genera el código del componente principal del Dashboard integrando estas métricas, asegurando que sea responsivo y que utilice componentes de UI modernos (puedes usar shadcn/ui o componentes similares si lo consideras adecuado).

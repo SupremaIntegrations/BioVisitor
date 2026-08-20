@@ -1,0 +1,44 @@
+Sincronización de Visitantes BioVisitor X ↔ Suprema API (Modo Híbrido)
+Contexto del Sistema: BioVisitor X debe funcionar de forma autónoma (usando su base de datos PostgreSQL local) pero, si existe una conexión configurada y activa, debe sincronizar los visitantes con el ecosistema de Suprema (BioStar 2/X). El sistema debe ser resiliente: si el servidor BioStar se desconecta, la App debe seguir registrando visitantes localmente.
+1. Lógica de Base de Datos y Entidades:
+Independencia: Los visitantes siempre se crean primero en la tabla local de PostgreSQL (vía TypeORM).
+Estado de Sincronización: Agregar campos a la entidad Visitor (o una tabla relacional VisitorSync):
+suprema_user_id: El ID que se le asigne en BioStar (si está sincronizado).
+sync_status: Enum (PENDING, SYNCED, FAILED, OFFLINE).
+last_sync_error: String para depuración.
+2. Integración con el suprema-gateway (Backend NestJS): Cuando se cree un visitante localmente, el gateway debe ejecutar el siguiente flujo siempre que haya una conexión activa:
+Autenticación: Realizar POST /api/login para obtener el bs-session-id del header
+.
+Creación en BioStar: Usar POST /api/users
+.
+Nivel de Cuenta: Asignar el perfil de Visitante (ID: 100000)
+.
+Grupo de Usuarios: Asignar al grupo configurado (por defecto ID: 1 "All Users" o uno específico de visitantes)
+.
+Vigencia: Mapear start_datetime y expiry_datetime de la App con los campos correspondientes en BioStar
+.
+Asignación de Credenciales:
+Si se genera un QR en la App, sincronizarlo como una credencial de tarjeta en BioStar usando POST /api/cards
+.
+3. Resiliencia y Manejo de Desconexión (BullMQ):
+Fallback: Si la llamada al API de Suprema falla (timeout o 5xx), el VisitorService debe marcar el sync_status como PENDING.
+Cola de Reintento: Usar el servicio de Redis/BullMQ existente para encolar la sincronización. El agente debe intentar re-sincronizar automáticamente cuando se detecte que el servidor BioStar vuelve a estar en línea (aprovechando el historial de pruebas del módulo de configuración).
+Operación Independiente: La App no debe bloquear el check-in local aunque el API falle. El visitante debe quedar registrado en PostgreSQL para que el guardia pueda verlo en el dashboard.
+4. Sincronización de Eventos (Opcional pero Recomendado):
+Dispositivo Virtual: Si se desea que el check-in de la App aparezca en los logs de BioStar, crear un Virtual Device (Rango 100001–999999)
+.
+Importación de Logs: Al hacer check-in en la App, usar POST /api/events/import con el código 4088 (Access Granted) para que BioStar registre la entrada del visitante
+.
+5. Frontend (Next.js):
+En la tabla de visitantes de src/app/dashboard/, agregar una columna de "Estado de Sincronización" con iconos de Lucide (Ej: CloudCheck para sincronizado, CloudOff para modo offline/independiente).
+Agregar un botón de "Forzar Sincronización" en el detalle del visitante para reintentar manualmente si el API falló.
+
+--------------------------------------------------------------------------------
+Notas técnicas para el desarrollador de Replit:
+Seguridad: Recuerda que todas las llamadas deben incluir el header bs-session-id: [TOKEN] obtenido en el login
+.
+HTTPS: El Unified Gateway de Suprema requiere conexiones seguras por el puerto 443
+.
+Compatibilidad BioStar X: Si se consulta la configuración para validar licencias de visitantes, recuerda que el campo licenses ahora tiene subcampos base, capacity y feature
+.
+Este prompt asegura que el software sea robusto, permitiendo trabajar sin internet o sin conexión al BioStar, pero automatizando todo el proceso de enrolamiento biométrico y de acceso cuando el API está disponible.

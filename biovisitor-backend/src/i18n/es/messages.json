@@ -1,0 +1,11 @@
+{
+    "email": {
+        "preRegistrationSubject": "Pre-registro de visita a {companyName}",
+        "qrDeliverySubject": "Tu código de acceso QR para tu visita",
+        "greeting": "Hola {visitorName},"
+    },
+    "errors": {
+        "visitorNotFound": "Visitante no encontrado.",
+        "invalidToken": "Token inválido."
+    }
+}

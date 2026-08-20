@@ -1,0 +1,113 @@
+================================================================
+  ACUERDO DE LICENCIA DE USO DE SOFTWARE
+  BioVisitor X — Sistema de Gestión de Visitantes
+  Suprema LATAM
+
+  Versión: 1.0
+================================================================
+
+IMPORTANTE: LEA ATENTAMENTE ESTE ACUERDO ANTES DE INSTALAR
+EL SOFTWARE. AL HACER CLIC EN "ACEPTO", USTED RECONOCE HABER
+LEÍDO, ENTENDIDO Y ACEPTADO LOS TÉRMINOS DE ESTE ACUERDO.
+
+----------------------------------------------------------------
+1. CONCESIÓN DE LICENCIA
+----------------------------------------------------------------
+Suprema LATAM le otorga al cliente final ("Licenciatario") una
+licencia no exclusiva, intransferible y limitada para instalar
+y usar BioVisitor X exclusivamente en las instalaciones del
+Licenciatario, en los servidores adquiridos o autorizados para
+este fin.
+
+----------------------------------------------------------------
+2. RESTRICCIONES
+----------------------------------------------------------------
+El Licenciatario NO puede:
+  a) Sublicenciar, vender, alquilar o transferir el software.
+  b) Realizar ingeniería inversa, descompilar o desensamblar
+     el software.
+  c) Eliminar o alterar los avisos de propiedad intelectual.
+  d) Usar el software para actividades ilícitas o contrarias a
+     las leyes aplicables.
+
+----------------------------------------------------------------
+3. PROPIEDAD INTELECTUAL
+----------------------------------------------------------------
+BioVisitor X y todos sus componentes son propiedad intelectual
+de Suprema LATAM y sus licenciantes. Este acuerdo no transfiere
+ningún derecho de propiedad sobre el software.
+
+----------------------------------------------------------------
+4. DATOS PERSONALES Y PRIVACIDAD
+----------------------------------------------------------------
+BioVisitor X procesa datos personales de visitantes (incluidos
+datos biométricos). El Licenciatario es responsable de:
+  a) Cumplir con las leyes locales de protección de datos
+     (LGPD, GDPR, Ley 1581 de Colombia, etc.).
+  b) Obtener el consentimiento explícito de los visitantes.
+  c) Implementar las medidas de seguridad adecuadas.
+  d) Definir los períodos de retención de datos.
+
+Suprema LATAM proporciona las herramientas técnicas para el
+cumplimiento normativo, pero la responsabilidad legal recae
+en el Licenciatario como controlador de datos.
+
+----------------------------------------------------------------
+5. INTEGRACIÓN CON BIOSTAR 2 / BIOSTAR X
+----------------------------------------------------------------
+El uso de este software con dispositivos Suprema (BioStation,
+FaceStation, BioEntry, etc.) está sujeto a los términos de
+licencia de Suprema Co., Ltd. El Licenciatario debe tener
+las licencias de BioStar correspondientes.
+
+----------------------------------------------------------------
+6. SOPORTE Y ACTUALIZACIONES
+----------------------------------------------------------------
+El soporte técnico y las actualizaciones están sujetos al
+contrato de servicio suscrito con Suprema LATAM. La licencia
+de uso no incluye soporte salvo que se especifique lo contrario.
+
+----------------------------------------------------------------
+7. GARANTÍA LIMITADA
+----------------------------------------------------------------
+EL SOFTWARE SE PROPORCIONA "TAL CUAL". SUPREMA LATAM NO OTORGA
+GARANTÍAS EXPRESAS NI IMPLÍCITAS, INCLUYENDO (SIN LIMITARSE A)
+LAS GARANTÍAS DE COMERCIABILIDAD, ADECUACIÓN PARA UN PROPÓSITO
+PARTICULAR O NO INFRACCIÓN.
+
+----------------------------------------------------------------
+8. LIMITACIÓN DE RESPONSABILIDAD
+----------------------------------------------------------------
+EN NINGÚN CASO SUPREMA LATAM SERÁ RESPONSABLE POR DAÑOS
+INDIRECTOS, INCIDENTALES, ESPECIALES, CONSECUENTES O PUNITIVOS,
+INCLUSO SI SE HA ADVERTIDO DE LA POSIBILIDAD DE DICHOS DAÑOS.
+LA RESPONSABILIDAD MÁXIMA DE SUPREMA LATAM NO SUPERARÁ EL MONTO
+PAGADO POR EL LICENCIATARIO POR EL SOFTWARE EN LOS 12 MESES
+PREVIOS AL EVENTO QUE ORIGINA LA RECLAMACIÓN.
+
+----------------------------------------------------------------
+9. TERMINACIÓN
+----------------------------------------------------------------
+Este acuerdo es efectivo hasta su terminación. Suprema LATAM
+puede terminar este acuerdo si el Licenciatario incumple
+cualquier término. Al terminar, el Licenciatario debe desinstalar
+y destruir todas las copias del software.
+
+----------------------------------------------------------------
+10. LEY APLICABLE
+----------------------------------------------------------------
+Este acuerdo se rige por las leyes de la República de Colombia.
+Cualquier disputa será sometida a la jurisdicción exclusiva de
+los tribunales competentes de Bogotá, Colombia.
+
+----------------------------------------------------------------
+11. CONTACTO
+----------------------------------------------------------------
+Suprema LATAM
+Email: soporte@suprema.co
+Web:   https://www.suprema.co
+
+================================================================
+Al instalar BioVisitor X, confirma que ha leído, comprendido
+y aceptado los términos de este acuerdo de licencia.
+================================================================

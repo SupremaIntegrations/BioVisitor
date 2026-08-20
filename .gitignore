@@ -1,0 +1,47 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist/
+build/
+.next/
+out/
+release/
+
+# Database data and massive binaries
+biovisitor-backend/release/*.exe
+biovisitor-frontend/release/*.zip
+biovisitor-frontend/.next/
+windows-deployment/output/*.exe
+windows-deployment/redist/*.exe
+windows-deployment/redist/*.msi
+
+local-services/**/*.zip
+local-services/logfile
+local-services/pg/data/
+local-services/pg/pgsql/
+local-services/redis/dump.rdb
+local-services/redis/*.exe
+local-services/redis/*.dll
+local-services/redis/*.pdb
+
+# Database dumps / local data (sensitive, environment-specific)
+db_backup.sql
+dump.rdb
+.redis-data/
+*.rdb
+
+# Local IDE / agent environment state (not project source)
+.local/
+.config/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

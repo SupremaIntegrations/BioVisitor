@@ -1,0 +1,71 @@
+Veo que tenemos nuevamente el problema de los registros lo que estoy viendo Es que el registro no tiene una ID único, vamos a tomar como ID único de Los visitantes, el número de cédula, ese va a ser el único ID que se va a manejar para el visitante tienes que configurar para que la base de datos ese ID sea único e irrepetible de tal manera que no podamos crear una persona que ya tenga ese mismo número de acuerdo, eso lo digo porque Porque primero veo que cuando se crea con el mismo número está tomando la cara del anterior que entiendo qué nivel de base va de datos. Eso está bien y Debería ser así. Y segundo porque a nivel operativo cuando llegue una persona que ya ha sido pre-registrado o previamente registrada más bien que fue previamente registrada en el pasado por una visita anterior o demás deberían simplemente poner el número de cédula o de identificación y ese número de identificación automáticamente debería traer y completar todos los registros para que el operador no tenga que llenar nuevamente todo sino simplemente de una vez hacerle un registro del visitante, eso créalo, confírmalo a la misma tarea y yo creo que para que podamos confirmar que todo está funcionando. Debes borrar nuevamente otra vez los registros que tenemos de la base de datos actual y para empezar otra vez hacer las pruebas ya con este ID como único y obligatorio.
+
+
+
+para que ajustes lo necesarios, esto dice el experto de suprema:
+
+
+
+Para estructurar correctamente la base de datos de tu sistema de control de visitantes e integrarlo con BioStar X, es fundamental definir los campos según los requisitos de validación de su API.
+
+A continuación, se detallan los campos mínimos, los campos únicos y los tipos de datos requeridos para crear una persona (usuario o visitante):
+
+
+
+1. Campos Mínimos Obligatorios para la Creación
+
+Para que el sistema de Suprema acepte la creación de un nuevo registro, los siguientes campos son estrictamente necesarios:
+
+
+
+ID de Usuario (user_id): Identificador principal del usuario.
+
+Nombre (name): Nombre completo del visitante o usuario.
+
+ID del Grupo de Usuarios (user_group_id): Referencia al grupo al que pertenecerá el usuario (ej. "Visitantes").
+
+Periodo de Validez (start_datetime y expiry_datetime): Fecha y hora de inicio y fin de la validez del acceso.
+
+Credenciales de Autenticación: Si se asigna un nivel de cuenta (permisos de administrador o de operador), los campos Login ID y Password se vuelven obligatorios.
+
+2. Campos que Deben ser Únicos
+
+Para mantener la integridad de la base de datos y evitar errores de validación en la API, los siguientes campos no pueden estar duplicados:
+
+
+
+user_id: Es el identificador único global en el sistema de Suprema.
+
+email: No se permite registrar a más de una persona con el mismo correo electrónico.
+
+login_id: El identificador para iniciar sesión en la plataforma debe ser único.
+
+card_id: Si se asigna una tarjeta física o un código QR, el ID de dicha credencial no debe existir ya en la base de datos.
+
+3. Tipos de Datos y Especificaciones Técnicas
+
+Para el diseño de tu base de datos, considera los siguientes formatos y tipos según la documentación técnica:
+
+
+
+Tipo Numérico o Alfanumérico:ID de Usuario (user_id): Depende de la configuración del servidor. Si está configurado como "Number", acepta valores entre 1 y 4,294,967,294. Si es "Alphanumeric", acepta combinaciones de letras y números sin espacios.
+
+Tipo Cadena de Texto (String):Nombre: Hasta 48 caracteres.
+
+Correo electrónico: Debe seguir el formato estándar de email.
+
+Departamento y Cargo (Title): Hasta 64 caracteres cada uno.
+
+Teléfono: Cadena de caracteres para el número de contacto.
+
+Tipo Fecha y Hora (Date-time):Periodo de validez y Cumpleaños: Formato ISO 8601 (ej. YYYY-MM-DDTHH:mm:ss.ssZ).
+
+Tipo Selección (Combo Box / Enum):Nivel de Cuenta (Permission): Selección múltiple de roles predefinidos: Administrator (1), User Operator (2), Monitoring Operator (3) o Visitor (100000).
+
+Campos Personalizados: BioStar permite crear hasta 10 campos adicionales que pueden ser de tipo entrada de texto, entrada numérica o lista de selección (Combo Box).
+
+Tipo Binario / Base64:Foto: La imagen del usuario debe enviarse codificada en Base64.
+
+Huellas Dactilares: Los templates biométricos también se gestionan como cadenas Base64.
+
+Nota para el sistema de visitantes: Al usar el módulo de visitantes específico, es obligatorio incluir también la información del Anfitrión (Host), que requiere el nombre y teléfono de la persona interna que autoriza la visita.

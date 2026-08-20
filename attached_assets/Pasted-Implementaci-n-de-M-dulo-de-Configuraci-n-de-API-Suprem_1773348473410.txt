@@ -1,0 +1,47 @@
+Implementación de Módulo de Configuración de API Suprema en BioVisitor X
+Contexto del Proyecto: Estamos trabajando en BioVisitor X, un VMS corporativo. Ya contamos con una base sólida:
+Backend: NestJS (v11), PostgreSQL (TypeORM), Redis (BullMQ). Tenemos un servicio de encriptación AES-256-GCM y un módulo suprema-gateway funcional.
+Frontend: Next.js (v16), React 19, Tailwind CSS v4. El dashboard está en src/app/dashboard/.
+Objetivo del Requerimiento: Crear una nueva sección dentro de src/app/dashboard/ llamada "Configuración" con un submenú "Conexión a API de Suprema". Este módulo permitirá a los administradores gestionar las credenciales y parámetros técnicos para que la web app se comunique con los servidores BioStar 2 o BioStar X de los clientes.
+1. Requerimientos Funcionales y de Seguridad:
+Guard de Acceso: La ruta y los componentes deben estar protegidos. Solo los usuarios cuyo permission.id o Account Level sea 1 (Administrator) en el sistema de Suprema pueden acceder
+.
+Gestión de Credenciales: El formulario debe permitir registrar/editar:
+URL Base: Formato https://[IP|Dominio][:Puerto]/api
+. (Nota: El puerto por defecto del Unified Gateway es 443
+).
+Credenciales: login_id y password
+.
+Versión de API: Selector BioStar 2 / BioStar X.
+Almacenamiento Seguro: Al guardar, el backend debe procesar las credenciales usando el servicio existente de AES-256-GCM antes de persistirlas en PostgreSQL.
+2. Especificaciones Técnicas de la API de Suprema (Para la implementación del Gateway):
+Protocolo: Obligatoriamente HTTPS
+.
+Autenticación (Handshake):
+Endpoint: POST /api/login
+.
+Body: {"User": {"login_id": "admin", "password": "password"}}
+.
+Manejo de Sesión: Tras el éxito (200 OK), se debe capturar el token bs-session-id del header de la respuesta
+.
+Persistencia del Token: Este token (cadena hex) debe incluirse en el header de todas las llamadas posteriores como bs-session-id: [TOKEN]
+.
+Cierre de Sesión: Endpoint POST /api/logout con el token en el header
+.
+3. Función "Probar Conexión":
+Implementar un botón en el frontend que dispare una acción en el NestJS.
+La lógica debe:
+Desencriptar temporalmente las credenciales.
+Intentar un login a la API de Suprema indicada.
+Si el login es exitoso, realizar una llamada ligera (ej. GET /js/info.json para versión
+ o GET /api/setting/biostar para verificar licencias
+).
+Retornar éxito o error detallado al frontend.
+4. Consideraciones de Compatibilidad BioStar 2 vs X:
+BioStar X mantiene compatibilidad con la mayoría de las APIs de BioStar 2
+.
+Diferencia clave: Si se consulta la configuración general, el campo licenses cambió su estructura en BioStar X (ahora incluye subcampos base, capacity y feature)
+. El código debe ser capaz de parsear ambas estructuras según la versión seleccionada.
+Entregables esperados:
+Frontend: Nuevas rutas en src/app/dashboard/settings/suprema/, componentes de formulario UI con Tailwind v4 y Lucide Icons.
+Backend: Endpoints en el controlador de configuración, integración con el servicio AES y actualización de los métodos de prueba en suprema-gateway.

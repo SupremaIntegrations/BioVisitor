@@ -1,0 +1,17 @@
+Actúa como un desarrollador Full-Stack experto en NestJS, Next.js y arquitecturas empresariales. Necesito implementar el flujo de Pre-registro Inteligente para el sistema 'BioVisitor X'.
+Objetivo: Permitir que un Anfitrión (Host) logueado en el dashboard invite a uno o varios visitantes ingresando solo su correo electrónico y fecha de la visita. El sistema enviará un 'Magic Link' al visitante para que ingrese a un portal público, complete sus datos personales (nombre, documento, empresa) y quede en estado PRE_REGISTERED, listo para su check-in en sitio.
+Instrucciones para el Backend (NestJS):
+Endpoint de Invitación (POST /api/v1/visits/invite): Crea un endpoint protegido (requiere JWT, rol HOST o ADMIN) que reciba un array de correos electrónicos, fecha de inicio (scheduledAt) y fin (expectedEndAt).
+Lógica del Servicio: Por cada correo, crea un registro en la entidad Visit con estado SCHEDULED. Genera un token único y seguro (UUID) y guárdalo en la entidad de la visita como onboardingToken (diferente al portalToken del QR).
+Módulo de Notificaciones: En NotificationsModule, implementa el envío asíncrono de un correo utilizando Nodemailer y un nuevo template Handlebars llamado pre-register-invite.hbs. El correo debe incluir la URL del frontend construida dinámicamente: [FRONTEND_URL]/visitor/onboarding/[onboardingToken].
+Endpoints del Portal Público (Módulo Visitors):
+GET /api/v1/visits/onboarding/:token: Retorna los datos básicos de la visita programada para renderizar el formulario.
+PUT /api/v1/visits/onboarding/:token: Recibe el payload del visitante (nombre, apellido, documento, empresa, y foto opcional). Actualiza la entidad Visitor, actualiza el estado de la Visit de SCHEDULED a PRE_REGISTERED e invalida el onboardingToken.
+Instrucciones para el Frontend (Next.js - Tailwind):
+Vista de Anfitrión (Dashboard): En la página de "Mis Visitas", agrega un botón 'Invitar Visitantes'. Al hacer clic, abre un modal (usando shadcn/ui) con un formulario dinámico que permita agregar múltiples correos electrónicos, seleccionar la fecha y hora, y enviar la invitación.
+Portal de Onboarding Público (/visitor/onboarding/[token]): Crea una página pública, responsiva y con el diseño corporativo de Suprema (burgundy #A11A36, grays).
+Flujo de la Página Pública:
+Al cargar, consume el endpoint GET /api/v1/visits/onboarding/[token]. Si el token es inválido o expiró, muestra un estado de error amigable.
+Si es válido, muestra un formulario de varios pasos (Stepper) pidiendo: Datos Personales (Nombre, Apellido, Documento) e Información de la Empresa.
+Al enviar (submit), consume el endpoint PUT y muestra una pantalla de éxito confirmando que su visita está aprobada y lista, indicando que al llegar a la recepción solo debe mencionar su nombre o mostrar su ID.
+Restricciones de Seguridad: Asegúrate de utilizar class-validator en los DTOs de NestJS para sanitizar todos los inputs del formulario público. El token de onboarding debe ser de un solo uso."

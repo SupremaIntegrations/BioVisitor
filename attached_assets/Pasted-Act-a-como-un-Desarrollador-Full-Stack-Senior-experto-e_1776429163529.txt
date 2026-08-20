@@ -1,0 +1,44 @@
+Actúa como un Desarrollador Full-Stack Senior experto en NestJS 11, Next.js 16, PostgreSQL, TypeORM y Tailwind CSS. Tu objetivo es implementar un nuevo "Módulo de Registro de Vehículos" para un Sistema de Gestión de Visitantes (VMS) existente que ya se integra con la API de Suprema BioStar 2.
+
+Contexto del sistema actual:
+- Frontend: React 19, Next.js 16, shadcn/ui, Tailwind CSS. Usa TanStack React Query v5.
+- Backend: NestJS 11, TypeScript, TypeORM, PostgreSQL. Usa Zod para validaciones y Pino para logging estructurado.
+- El sistema gestiona visitas con la entidad `Visit` y recientemente implementó una entidad `VisitorAsset`.
+- Debes aplicar estrictamente prácticas de "Arquitectura Defensiva y Observable", incluyendo logs de auditoría (Audit Logs) para eventos críticos de seguridad y manejo robusto de errores de API.
+
+Requerimientos del Módulo de Vehículos:
+
+1. ESQUEMA DE BASE DE DATOS (TypeORM):
+Crea una nueva entidad `VisitorVehicle` vinculada a la instancia de la visita (`Visit`) y al visitante (`Visitor`), similar a cómo funciona `VisitorAsset`.
+Campos mínimos requeridos:
+- id (UUID), tenantId (relación)
+- visitId (relación con Visit), visitorId (relación con Visitor)
+- licensePlate (string, obligatorio, normalizado sin espacios)
+- brand (string, opcional), model (string, opcional), color (string, opcional)
+- vehicleType (enum: CAR, MOTORCYCLE, TRUCK, BICYCLE, OTHER)
+- parkingZone (string, opcional) - para asignar a un parqueadero interno.
+- verifiedAtCheckout (boolean, por defecto false) - para validación en recepción a la salida.
+- hasEntered (boolean, por defecto false) - para soportar el flujo donde el vehículo entra antes que el visitante al lobby, o para futura integración de cámaras LPR.
+- createdAt, updatedAt
+
+2. BACKEND (NestJS):
+- Crea el CRUD para `VisitorVehicle` (Crear, Leer, Actualizar, Eliminar).
+- Implementa esquemas de validación Zod (`visitorVehicleSchema`) para validar los payloads de entrada antes de guardar en la DB.
+- Implementa endpoints asíncronos bajo la ruta `/api/v1/visits/:visitId/vehicles`.
+- Logging y Auditoría: Registra en Pino los siguientes eventos de auditoría (AuditEvent):
+  * `visit.vehicle_declared` (cuando se registra el vehículo).
+  * `visit.vehicle_verified` (cuando el recepcionista valida la salida).
+  * `visit.vehicle_removed` (si se elimina de la visita).
+
+3. FRONTEND (Next.js + shadcn/ui):
+- Modifica el flujo de creación/pre-registro de visita para incluir una sección opcional de "Vehículos". Permite agregar múltiples vehículos dinámicamente.
+- Crea un componente `VehicleListCard` para mostrar la información del vehículo (placa, tipo, zona de parqueadero) en el dashboard en tiempo real de la visita.
+- En el modal de Check-out, agrega un paso de "Verificación de Vehículo" (similar a los activos) con un checkbox o botón para confirmar `verifiedAtCheckout = true`.
+- Manejo de estados UI: Implementa manejo de estados de Carga (Skeletons), Error (Alert con AlertCircle), Vacío y Éxito para todas las llamadas a la API de vehículos.
+
+4. CONSIDERACIONES DE CIBERSEGURIDAD Y BUENAS PRÁCTICAS:
+- No expongas variables de entorno sensibles al frontend.
+- Asegura que todas las respuestas de la API sean tipadas y controladas.
+- La placa (licensePlate) debe poder indexarse rápidamente para futuras búsquedas o integraciones LPR (License Plate Recognition).
+
+Por favor, entrégame el código paso a paso: primero la Entidad y el esquema de base de datos, luego los servicios y controladores de NestJS, y finalmente los componentes de Next.js y React Query.

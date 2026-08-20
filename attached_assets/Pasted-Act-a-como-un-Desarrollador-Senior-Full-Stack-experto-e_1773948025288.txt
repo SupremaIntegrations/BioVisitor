@@ -1,0 +1,35 @@
+Actúa como un Desarrollador Senior Full-Stack experto en NestJS, Next.js, WebSockets y la API de Suprema BioStar 2.
+
+Necesito que implementes el sistema de "Códigos QR Dinámicos de Un Solo Uso (Burn-after-use)" para el módulo de credenciales de BioVisitor X. Dado que el hardware de control de acceso funciona en modo "Offline-First", el QR no puede rotar usando un algoritmo TOTP local. Debemos usar una arquitectura basada en Magic Links, aprovisionamiento "Just-in-Time" y WebSockets.
+
+Sigue EXACTAMENTE estas instrucciones críticas:
+
+**1. FRONTEND (Next.js - Portal del Visitante):**
+- Crea una vista pública protegida por un token criptográfico (ej. `/visitor/qr/:token`). Este es el enlace que se enviará por correo electrónico al visitante.
+- Al cargar la vista, el frontend solicita un QR activo al backend.
+- Muestra el código QR generado usando una librería como `qrcode.react`.
+- Implementa un temporizador visual de 60 segundos (configurable desde settings). 
+- Si el temporizador llega a cero y el QR no ha sido usado, el frontend hace un polling al backend para invalidar el QR anterior y solicitar uno nuevo, actualizando la pantalla.
+
+**2. BACKEND (NestJS - Generación y Aprovisionamiento):**
+- Crea un endpoint `GET /api/v1/visitors/qr/generate`.
+- Al ser llamado, genera una cadena ASCII aleatoria alfanumérica de máximo 32 caracteres (Límite estricto de BioStar 2 para códigos QR).
+- Registra la tarjeta en BioStar 2 llamando a `POST /api/cards` enviando:
+  ```json
+  {
+    "CardCollection": {
+      "rows": [{
+        "card_id": "CADENA_ASCII_GENERADA",
+        "card_type": { "id": "6", "type" : "6" }
+      }]
+    }
+  }
+Asigna este nuevo card_id al usuario correspondiente haciendo un PUT /api/users/:id y enviando el objeto cards con el ID devuelto en el paso anterior.
+Retorna la cadena ASCII al frontend para que la dibuje.
+3. BACKEND (NestJS - El "Quemado" vía WebSocket):
+El backend DEBE mantener una conexión persistente por WebSocket hacia BioStar 2 en la ruta wss://[IP_BIOSTAR]:[PUERTO]/wsapi para recibir eventos en tiempo real.
+Analiza cada MessageEvent entrante. Busca el evento de "Acceso Concedido" (ACCESS_GRANTED o un código de evento exitoso asociado al user_id del visitante).
+Cuando detectes que el visitante logró entrar, ejecuta INMEDIATAMENTE la lógica de quemado: a. Llama a PUT /api/users/:id pasando un arreglo vacío en cards para desvincular el QR del usuario en BioStar 2. b. Actualiza la base de datos PostgreSQL de BioVisitor marcando ese ticket/QR como USED.
+Si el dispositivo intenta leer el mismo QR 5 segundos después, BioStar 2 lo rechazará porque la credencial ya fue removida de su perfil.
+Criterios de Aceptación: ✅ El QR no es una imagen estática enviada por correo, sino un Portal Web Reactivo. ✅ El backend respeta el límite estricto de máximo 32 caracteres ASCII para la creación de credenciales QR (Type 6). ✅ El sistema escucha pasivamente vía WebSocket; no satura el servidor de BioStar 2 haciendo llamadas GET /logs constantemente. ✅ Una vez que el WebSocket detecta el paso del visitante, la credencial se revoca de BioStar 2 en milisegundos, garantizando la política de "un solo uso".
+Genera el código para el componente de Frontend, el Servicio de NestJS para interactuar con BioStar 2, y el Gateway de WebSocket que escuche los eventos de acceso

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pre-registro de Visita</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #A11A36; /* Infinite Burgundy */
+        }
+        .content {
+            padding: 30px 0;
+        }
+        .booking-details {
+            background-color: #F8F9FA;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #E9ECEF;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            background-color: #A11A36;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #6C757D;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E9ECEF;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>{{companyName}} - Sistema de Visitas</h2>
+    </div>
+    
+    <div class="content">
+        <p>Hola <strong>{{visitorName}}</strong>,</p>
+        
+        <p>Has sido invitado a una visita en <strong>{{companyName}}</strong> por parte de <strong>{{hostName}}</strong>.</p>
+        
+        <div class="booking-details">
+            <p><strong>Fecha programada:</strong> {{scheduledDate}}</p>
+        </div>
+        
+        <p>Para agilizar tu ingreso a nuestras instalaciones, te solicitamos completar tu pre-registro. Al finalizar este proceso, recibirás tu código QR de acceso.</p>
+        
+        <div class="btn-container">
+            <a href="{{registrationLink}}" class="btn">Completar Pre-registro</a>
+        </div>
+        
+        <p>Si el botón no funciona, puedes copiar y pegar el siguiente enlace en tu navegador:</p>
+        <p style="word-break: break-all; font-size: 13px; color: #0056b3;">
+            <a href="{{registrationLink}}">{{registrationLink}}</a>
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>Este es un mensaje automático generado por BioVisitor X.</p>
+        <p>Por favor, no respondas a este correo.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+Actúa como un desarrollador Full-Stack experto en NestJS, Next.js y en la integración de APIs externas de hardware de seguridad (Zero-Trust). Necesito implementar la asignación de permisos de acceso en el sistema 'BioVisitor X', integrándolo con la API de Suprema BioStar 2.
+Objetivo: Permitir que, al registrar un visitante, el operador seleccione un 'Grupo de Acceso' (Access Group). Esta información se debe enviar a BioStar 2 en la creación del usuario para que el hardware sincronice sus credenciales (QR, Facial, Huella) únicamente a las puertas permitidas, y al hacer check-out, el visitante sea eliminado del sistema de control de acceso físico.
+Instrucciones para el Backend (NestJS - BioStar 2 API):
+Endpoint de Sincronización de Grupos (GET /api/v1/access-groups): Crea un servicio en SupremaGatewayModule que consulte el endpoint POST /api/v2/access_groups/search (o GET /api/access_groups) de BioStar 2 para obtener la lista de Grupos de Acceso disponibles (ID y Nombre). Implementa una caché en Redis (TTL 1 hora) para no saturar la API de BioStar.
+Actualización del Payload de Registro (POST /api/v1/visitors): Modifica el esquema Zod y el DTO de creación de visita para requerir un array de accessGroupIds.
+Al mapear el payload para BioStar 2 (POST /api/users), asegúrate de incluir el nodo access_groups dentro del objeto User de esta forma exacta: "access_groups": [{"id": [ID_DEL_GRUPO] }].
+Lógica de Check-out (DELETE /api/users): En el servicio de Check-out (manual o cron job automático por expiry_datetime), implementa la llamada a la API de BioStar 2 para eliminar permanentemente el usuario temporal (usando su supremaUserRefId). BioStar 2 se encargará automáticamente de borrarlo de los lectores físicos.
+Validación Defensiva: Utiliza esquemas Zod estrictos (z.object().passthrough()) para validar todas las respuestas de BioStar 2 y maneja los errores con Pino logger (Auditoría: registrar SYNC_ERROR, CHECKIN_SUCCESS, CHECKOUT_SUCCESS).
+Instrucciones para el Frontend (Next.js - Tailwind):
+Componente de Selección de Acceso: En la pestaña o modal de 'Accesos', agrega un componente de selección múltiple (Multi-Select Dropdown usando shadcn/ui) etiquetado como 'Niveles de Acceso Permitidos'.
+Este componente debe consumir el endpoint /api/v1/access-groups mediante React Query (useQuery) y mostrar un Skeleton loader mientras carga.
+Si la API falla, muestra un componente Alert rojo que diga 'Error al obtener los grupos de acceso de BioStar 2' y bloquea el botón de guardar visita para evitar inconsistencias.
+En la tabla principal de visitantes activos, añade una columna o un 'Badge' que muestre el Grupo de Acceso asignado al visitante para visibilidad rápida del operador."

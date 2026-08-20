@@ -1,0 +1,31 @@
+CONTEXTO MAESTRO DEL PROYECTO: BioVisitor VMS
+
+Necesito que asimiles este documento como la base absoluta de nuestro trabajo. Este proyecto es un Sistema de Control de Visitantes (VMS) de nivel corporativo, diseñado específicamente para integrarse de forma nativa e invisible con las plataformas BioStar 2 y BioStar X de Suprema a través de sus APIs REST/JSON.
+
+1. Objetivo y Visión Global (Basado en los requerimientos iniciales): Queremos construir un VMS que recopile las mejores prácticas a nivel mundial en seguridad y experiencia de usuario. El sistema debe permitir:
+
+Registro en Recepción (Walk-in): Los recepcionistas deben poder registrar visitantes, enrolar sus rostros vía WebCam o lectores Suprema, escanear huellas, tarjetas RFID, y leer pasaportes/DNI (con OCR para llenado automático).
+Portal de Pre-registro: Un enlace público donde los visitantes agendados puedan completar sus datos y tomarse una selfie (foto de rostro) desde su móvil antes de llegar, sincronizándose con BioStar.
+Automatización de Accesos: Al hacer Check-out, el sistema debe eliminar automáticamente al visitante de los dispositivos Suprema (BioStar) para no saturar la memoria de hardware.
+Credenciales Ágiles: Generación de Códigos QR Dinámicos (temporales) enviados por correo electrónico, e impresión de stickers/gafetes de identificación en recepción.
+Reportes y Auditoría: Exportación de reportes globales en CSV y PDF.
+2. Estado Actual y Arquitectura Base (¡No modificar la estructura!): Hemos construido una arquitectura Senior, robusta, altamente concurrente y Stateless, ideal para sistemas de seguridad. El código fuente actual que tienes se divide en:
+
+Backend (NestJS + TypeScript):
+Base de datos principal en PostgreSQL usando TypeORM (Tablas: Visitantes, Visitas, Logs de Auditoría, Usuarios VMS).
+Redis implementado para manejar caché de sesiones, colas de trabajo asíncronas (con Bull) para sincronizar con la API de BioStar, y expiración de tokens QR dinámicos.
+Módulo "Suprema Gateway": Una capa de abstracción (Patrón Strategy/Facade) que se encarga de manejar el complejo ciclo de vida de los tokens de sesión (bs-session-id) tanto de BioStar 2 como de BioStar X.
+Seguridad estricta: Autenticación por JWT y módulo de encriptación interna (AES-256-GCM) para guardar credenciales de BioStar.
+Frontend (Next.js + React + Tailwind CSS):
+Diseño pegado al manual de marca de Suprema usando los colores Infinite Burgundy y Classy Gray.
+Un "Dashboard" administrativo para gestionar los visitantes esperados (Scheduled) y los que están en el edificio (In Building), manejado con WebSockets para tiempo real.
+Un "Register Walk-in Modal" que utiliza la API de navegadores para acceder a la cámara, tomar la foto del visitante e inyectarla al payload del Backend.
+3. Reglas de Nuestro Entorno en Replit:
+
+Desarrollo Efímero: Replit se usará ÚNICAMENTE como un entorno de desarrollo interactivo para acelerar la creación de interfaces en Next.js y refinar la lógica de negocio en NestJS. El producto final siempre será On-Premise (se desplegará en servidores físicos locales).
+Cero Cambios Arquitectónicos Destructivos: Bajo ninguna circunstancia debes migrar frameworks, cambiar TypeORM por otro ORM, o hardcodear configuraciones que rompan la capacidad del proyecto de ejecutarse localmente a través de 
+
+.env
+.
+Identidad Visual: Todo componente nuevo de React que diseñes debe seguir luciendo premium, institucional, moderno (glassmorphism sutil, transiciones) y utilizar la paleta de colores de Suprema.
+Ahora que tienes toda la historia, la visión final y el entendimiento exacto del código que tienes cargado: Vamos a enfocarnos progresivamente en terminar los módulos de UI, pulir la lectura de cámara y códigos QR, y detallar el portal de pre-registro. Confírmame que has asimilado esta visión para enviarte nuestra primera tarea.

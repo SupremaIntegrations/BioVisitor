@@ -1,0 +1,98 @@
+================================================================
+  BioVisitor X — Notas de Versión
+  Suprema LATAM
+================================================================
+
+VERSIÓN 1.0.0  (2026-07-24)
+----------------------------------------------------------------
+Primera versión de producción de BioVisitor X.
+
+NUEVAS FUNCIONALIDADES
+─────────────────────────────────────────────────────────────
+Gestión de Visitantes
+  • Registro Walk-in con captura facial (react-webcam)
+  • Pre-registro remoto por email (link único con expiración)
+  • Check-in / Check-out manual y automático
+  • Vista de detalle de visita con edición de datos
+
+Control de Acceso — Integración Suprema BioStar
+  • BioStar 2 y BioStar X (API REST JSON)
+  • Enrolamiento de credenciales: QR dinámico, RFID, Cara visual,
+    Huella dactilar (BioMini Slim 2)
+  • Grupos de acceso configurables por visita
+  • Auto-checkout por dispositivo de salida (tarjeta o cara)
+
+Encuesta de Salida
+  • Email automático post-checkout con calificación de 1–5 estrellas
+  • Reporte de "Falsa Salida" con re-habilitación temporal de acceso
+  • Panel de operador con campana de alertas en tiempo real
+
+Gestión de Activos y Vehículos
+  • Declaración de equipos (laptop, tablet, herramientas) al ingresar
+  • Verificación de activos y vehículos en el check-out
+
+Impresión de Badges
+  • Impresora Sewoo LK-B30IIE (térmica)
+  • Formatos: 62×100mm / 4"×3" Sewoo / CR80
+  • Orientación landscape para 4"×3"
+
+Auditoría y Reportes
+  • Log de auditoría inmutable con diff viewer
+  • Exportación CSV / PDF con registro en auditoría
+  • Filtros avanzados por tenant, usuario, acción y fecha
+
+Dashboard en Tiempo Real
+  • Socket.IO — actualizaciones sin recarga de página
+  • Pestañas: Esperados / En Edificio / No-Show / Falsa Salida
+  • Banner de overtime y campana de alertas
+
+Seguridad
+  • HTTPS nativo con certificado SSL autofirmado (7 años)
+  • JWT con refresh tokens
+  • AES-256-GCM para credenciales BioStar
+  • Hash bcrypt (12 rondas) para contraseñas de operadores
+  • Rate limiting, CORS, helmet
+
+Internacionalización
+  • 4 idiomas: Español, English, Português, 한국어
+  • Preferencia persistida por operador (localStorage)
+
+Instalación Windows
+  • Installer Inno Setup — wizard completo
+  • Servicios Windows via NSSM:
+      "Suprema LATAM BioVisitor Service"
+      "Suprema LATAM BioVisitor Web GUI"
+  • PostgreSQL 16 + Redis unattended
+  • Certificado SSL auto-generado (OpenSSL o PowerShell)
+  • Configuración SMTP en el wizard
+  • Detección de conflictos de puertos con alternativas editables
+  • Selección de interfaz de red para el certificado
+
+CAMBIOS EN EL ESQUEMA DE BASE DE DATOS
+─────────────────────────────────────────────────────────────
+  (Primera versión — no aplica migración desde versión anterior)
+
+  Tablas creadas:
+    tenants, users, visitors, hosts, visits, audit_logs,
+    suprema_api_connections, pre_registrations, visitor_assets,
+    access_credentials, blacklist, equipment_entries,
+    visitor_documents, visitor_vehicles
+
+NOTAS DE ACTUALIZACIÓN
+─────────────────────────────────────────────────────────────
+  Esta es la versión inicial. No requiere migración de datos.
+
+PRIMER INICIO DE SESIÓN
+─────────────────────────────────────────────────────────────
+  No se crea ningún administrador durante la instalación. Al
+  abrir la URL de BioVisitor X por primera vez, la aplicación
+  detecta que no existe ningún usuario y muestra su propio
+  asistente para crear el administrador inicial (correo y
+  contraseña a elección de quien instala).
+
+SOPORTE
+─────────────────────────────────────────────────────────────
+  Web  : https://www.suprema.co/soporte
+  Email: soporte@suprema.co
+
+================================================================

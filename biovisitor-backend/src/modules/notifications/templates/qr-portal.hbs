@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tu Código QR de Acceso</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .wrapper {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .header {
+            background-color: #A11A36;
+            padding: 28px 32px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.75);
+            margin: 6px 0 0;
+            font-size: 13px;
+        }
+        .content {
+            padding: 32px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        .info-box {
+            background-color: #f9f9f9;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+        .info-box p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .info-box strong {
+            color: #222;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 28px 0;
+        }
+        .cta-label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #A11A36;
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.1px;
+        }
+        .url-fallback {
+            margin-top: 20px;
+            padding: 12px 16px;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #555;
+            word-break: break-all;
+        }
+        .url-fallback a {
+            color: #A11A36;
+        }
+        .note {
+            background-color: #fff8ea;
+            border-left: 4px solid #f5a623;
+            padding: 12px 16px;
+            border-radius: 0 6px 6px 0;
+            margin-top: 24px;
+        }
+        .note p {
+            margin: 0;
+            font-size: 13px;
+            color: #7a5a00;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+            padding: 20px 32px;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h1>Tu acceso QR está listo</h1>
+            <p>BioVisitor X — Sistema de Gestión de Visitantes</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hola <strong>{{visitorName}}</strong>,</p>
+
+            <p style="font-size:14px; color:#444;">
+                Tu visita ha sido registrada. Haz clic en el botón de abajo para ver tu código QR de acceso dinámico.
+                Muéstralo en la entrada el día de tu visita.
+            </p>
+
+            <div class="info-box">
+                <p><strong>Fecha programada:</strong> {{scheduledDate}}</p>
+                <p><strong>Anfitrión:</strong> {{hostName}}</p>
+            </div>
+
+            <div class="cta-section">
+                <p class="cta-label">Abre este enlace en tu móvil para ver tu QR</p>
+                <a href="{{portalUrl}}" class="btn">Ver mi código QR</a>
+            </div>
+
+            <div class="url-fallback">
+                <p style="margin:0 0 4px; font-weight:600;">Si el botón no funciona, copia este enlace:</p>
+                <a href="{{portalUrl}}">{{portalUrl}}</a>
+            </div>
+
+            <div class="note">
+                <p>
+                    El código QR se renueva automáticamente cada 60 segundos por seguridad.
+                    Ábrelo justo antes de llegar para que siempre esté vigente.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Este es un mensaje automático generado por BioVisitor X.</p>
+            <p>Por favor, no respondas a este correo.</p>
+        </div>
+    </div>
+</body>
+</html>

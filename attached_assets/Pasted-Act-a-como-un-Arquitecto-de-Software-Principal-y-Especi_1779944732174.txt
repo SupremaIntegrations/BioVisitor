@@ -1,0 +1,40 @@
+Actúa como un Arquitecto de Software Principal y Especialista en Privacidad de Datos (Data Privacy Officer - DPO). Tu objetivo es diseñar la especificación técnica, funcional y de cumplimiento para el desarrollo de un "Módulo de Gestión y Monitoreo de Visitantes Frecuentes" dentro de nuestra plataforma corporativa. 
+
+Yo soy el Administrador del Sistema, por lo que los entregables deben tener un enfoque de configuración de alto nivel, técnico y de gobernanza de datos. El diseño debe regirse bajo el principio de "Privacy by Design" (Privacidad desde el Diseño).
+
+REQUERIMIENTO DE UBICACIÓN EN LA INTERFAZ DE USUARIO (UI):
+Este nuevo módulo de "Visitantes Frecuentes" debe ser posicionado y visualizado dentro de la arquitectura de información en el "Menú de Visitante", específicamente ubicado en el extremo derecho de todas las opciones visibles para los usuarios que naveguen en esa sección. Mantén esta directriz de maquetación en mente al estructurar los flujos de navegación de la administración del sistema.
+
+Desarrolla la especificación detallando los siguientes 8 ejes fundamentales:
+
+1. CONFIGURACIÓN DEL MOTOR DE REGLAS (VISITANTE FRECUENTE)
+Diseña la lógica y los parámetros dinámicos que el sistema debe evaluar para clasificar a un sujeto como "Visitante Frecuente". Incluye variables como: umbral numérico de accesos ($N$), ventana de tiempo móvil (periodo $T$), segmentación por tipo de visitante (proveedores, contratistas, auditores) y la fórmula lógica o pseudocódigo para el cálculo de recurrencia.
+
+2. MÁSCARAS DE PRIVACIDAD Y DESIDENTIFICACIÓN EN REPORTES
+Define la estructura del reporte técnico de visitantes frecuentes. Especifica en una tabla:
+- Campos visibles/públicos (ej. ID anonimizado, empresa, área).
+- Campos enmascarados o tokenizados (ej. Nombres, identificaciones oficiales, biométricos cifrados) necesarios para cumplir con las normativas de protección de datos personales (GDPR / Leyes Locales).
+
+3. MATRIZ DE CONTROL DE ACCESO BASADO EN ROLES (RBAC)
+Establece una política estricta de privilegios mínimos. Define qué roles específicos (Soporte, Seguridad Física, DPO, Administrador) tienen permisos de Lectura (Read), Escritura (Write), Modificación (Update) o Auditoría sobre este módulo, justificando el nivel de acceso debido a la sensibilidad de los datos agregados.
+
+4. ARQUITECTURA DE DATOS E INTEGRIDAD DE CONTEOS
+Describe el diseño a nivel de base de datos para garantizar la precisión de los registros de entrada y salida (Check-in / Check-out). Detalla los mecanismos técnicos para evitar colisiones, registros huérfanos o duplicados (ej. uso de transacciones ACID, triggers o colas de eventos) que puedan corromper las métricas de frecuencia.
+
+5. MOTOR DE ALERTAS Y DETECCIÓN DE ANOMALÍAS (COMPORTAMIENTO INHABITUAL)
+Define las reglas automáticas y heurísticas para identificar comportamientos que se desvíen del patrón normal de un visitante frecuente (ej. ingresos fuera de horario de oficina, accesos a zonas no autorizadas, permanencia excesiva). Detalla el flujo de notificación y criticidad de la alerta.
+
+6. ECOSISTEMA DE INTEGRACIÓN Y ANALÍTICA AVANZADA
+Explica cómo este módulo debe integrarse mediante APIs robustas con los sistemas periféricos de la organización:
+- Logs de Auditoría Inmutable (SIEM / Blockchain / Write Once Read Many).
+- Sistemas de Seguridad Física (Control de accesos biométricos / Lectores de tarjetas).
+- Módulos de analítica predictiva para tendencias de ocupación.
+
+7. Escalabilidad y ABSTRACCIÓN DE FILTROS (FLEXIBILIDAD DE NEGOCIO)
+Diseña la arquitectura de consultas para que el módulo sea altamente escalable y permita al administrador añadir filtros dinámicos en el futuro (ej. filtrado por área visitada, departamento anfitrión, nivel de criticidad de la empresa externa) sin necesidad de refactorizar el código base o alterar el esquema de la base de datos.
+
+8. MARCO DE CUMPLIMIENTO NORMATIVO Y GOBERNANZA
+Establece los lineamientos técnicos para cumplir con las políticas internas de la organización y legislaciones vigentes. Incluye políticas de retención de datos (ciclo de vida y purga automática de datos sensibles), consentimiento informado digital en el registro y cifrado de datos en reposo (AES-256) y en tránsito (TLS 1.3).
+
+ENTREGABLE REQUERIDO:
+Presenta la especificación utilizando Markdown formal, con tablas claras, diagramas de flujo lógicos descritos en texto o bloques de arquitectura, y un tono técnico, ejecutivo y estrictamente enfocado a la seguridad de la información. Asegúrate de incluir y justificar el requerimiento de interfaz para situarlo en el menú de visitante a la derecha de todos de forma clara en el reporte de UI/UX.

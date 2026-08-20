@@ -1,0 +1,72 @@
+modules = ["nodejs-24", "web", "python-3.11", "postgresql-16"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
+packages = ["redis"]
+
+[userenv]
+
+# Valores no sensibles del entorno de desarrollo Replit. Los secretos
+# (DB_PASSWORD, JWT_SECRET, ENCRYPTION_MASTER_KEY, QR_JWT_SECRET,
+# REDIS_PASSWORD, BIOSTAR*_ADMIN_PASSWORD, SMTP_PASSWORD) NUNCA deben ir
+# aquí — van en Replit Secrets (bóveda cifrada, no versionada). El backend
+# valida al arrancar (main.ts: validateSecurityEnv) que los secretos
+# críticos estén definidos y falla si no lo están.
+[userenv.shared]
+APP_PORT = "3001"
+NODE_ENV = "development"
+DEFAULT_LANGUAGE = "es"
+REDIS_KEY_PREFIX = "bv:"
+JWT_EXPIRES_IN = "8h"
+JWT_REFRESH_EXPIRES_IN = "7d"
+QR_EXPIRATION_MINUTES = "15"
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = "587"
+SMTP_SECURE = "false"
+SMTP_FROM = "noreply@biovisitor.com"
+SMTP_FROM_NAME = "BioVisitor VMS"
+DB_LOGGING = "false"
+DB_PORT = "5432"
+DB_USERNAME = "postgres"
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = "6379"
+NEXT_PUBLIC_API_URL = "/api/v1"
+CORS_ALLOWED_ORIGINS = "http://localhost:5000,http://localhost:3000,http://localhost:3001"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash start.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000

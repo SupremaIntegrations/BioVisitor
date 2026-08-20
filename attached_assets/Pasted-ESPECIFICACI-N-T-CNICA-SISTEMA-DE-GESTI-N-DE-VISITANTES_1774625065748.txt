@@ -1,0 +1,69 @@
+ESPECIFICACIÓN TÉCNICA 
+SISTEMA DE GESTIÓN DE VISITANTES E IDENTIDAD INTELIGENTE 
+Integración: Suprema BioStar 2 API
+
+Esta es una especificación técnica y funcional para un sistema de gestión de visitas que integra hardware de escaneo de documentos oficiales, captura de imagen y emisión de distintivos.
+
+1. Objetivos del Sistema
+Rapidez: Registrar visitantes en menos de 10 segundos.
+Precisión: Eliminar errores humanos en la captura de datos (nombre, CURP, domicilio).
+Seguridad: Validar la autenticidad de los documentos y generar un registro digital.
+Identificación: Emitir stickers con foto y datos de la visita para control interno. 
+2. Especificaciones Funcionales (Software)
+Módulo de Escaneo OCR (Reconocimiento Óptico de Caracteres):
+Lectura automática del anverso/reverso (código OCR y QR).
+Lectura de la zona MRZ (Machine Readable Zone) en Pasaportes.
+Extracción automática de datos: Nombre, apellido, fecha de nacimiento, clave de elector, domicilio, CURP.
+Gestión de Visitas:
+Pre-registro web para visitantes frecuentes o agendados.
+Registro en recepción/kiosco auto-servicio.
+Búsqueda de historial de visitas y registro de entrada/salida (In/Out).
+Funciones de Seguridad:
+Captura de fotografía del visitante con webcam.
+Generación de listas negras (banned list).
+Firma digital de acuerdos de confidencialidad (NDA) o políticas de seguridad en pantalla.
+Emisión de Stickers (Badges):
+Diseño personalizable de etiqueta (Logo, Foto, Nombre, Empresa, Motivo, Host, Fecha).
+Impresión térmica rápida de stickers adhesivos.
+Notificaciones:
+Envío de correo electrónico/SMS al anfitrión (host) cuando llega la visita. 
+3. Especificaciones de Hardware (Periféricos)
+Para el correcto funcionamiento, el software debe integrarse con:
+Escáner de Documentos/ID: Escáner de cama plana de alta velocidad o escáner dúplex compacto (ej. Plustek SecureScan, DESKO, o lectores OCR OEM) diseñado para leer ID/INE/pasaportes.
+Impresora de Stickers/Etiquetas: Impresora térmica directa capaz de imprimir etiquetas autoadhesivas.
+Kiosco o Estación de Recepción: PC con Windows 10/11, Webcam de alta resolución para captura de rostro. 
+4. Beneficios
+Seguridad Mejorada: Identificación precisa del visitante y validación de documentos.
+Profesionalismo: Una experiencia de bienvenida moderna y rápida.
+Cumplimiento: Registro auditable de todas las personas que ingresaron al edificio. 
+
+
+5. Módulos Funcionales del Software
+Registro de Visitantes: Interfaz para dar de alta visitas mediante el escaneo de INE (México), documento de Identidad o Pasaportes. El sistema debe extraer automáticamente nombre, CURP/ID y fecha de nacimiento.
+Captura Fotográfica: Integración con webcam para la toma de fotografía del visitante en tiempo real.
+Gestión de Anfitriones: Directorio de empleados para asignar a quién se visita y enviar notificaciones automáticas (email/app).
+Control de Salidas: Registro rápido del egreso para mantener el conteo exacto de personas en el edificio.
+Panel de Administración: Generación de reportes de tráfico, historial de visitas y listas de emergencia. 
+7. Especificaciones de Hardware Requerido
+Escáner de Documentos:
+Lector profesional con capacidad OCR (Reconocimiento Óptico de Caracteres) para leer la zona MRZ de pasaportes y el código de barras/OCR.
+Modelo: https://plustek.com/lam/products/customized-scan-modules/securescan-x-cube/index.php
+
+Cámara de Registro: Webcam con resolución mínima de 1080p y enfoque automático para asegurar una imagen clara para reconocimiento facial opcional.
+Impresora de Stickers:
+Impresora de tecnología térmica directa (no requiere tinta) para agilizar el proceso.
+Debe permitir etiquetas adhesivas de aproximadamente 2" x 4". 
+
+
+
+
+
+
+
+4. Flujo de Operación Sugerido
+Identificación: El visitante coloca su INE o pasaporte en el escáner.
+Validación: El software extrae los datos y verifica si la persona está en una "lista negra" o tiene cita previa.
+Fotografía: Se captura la imagen del rostro mediante la webcam.
+Impresión: La impresora térmica emite un sticker con nombre, foto, empresa y persona a quien visita.
+Acceso: Se autoriza la entrada y se registra el tiempo de ingreso
+

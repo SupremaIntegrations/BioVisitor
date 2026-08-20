@@ -1,0 +1,31 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Database data and massive binaries
+windows-deployment/output/*.exe
+windows-deployment/redist/*.exe
+
+#local-services/**/*.zip
+#local-services/pg/data/
+#local-services/pg/pgsql/
+#local-services/redis/dump.rdb
+#local-services/redis/*.exe
+#local-services/redis/*.dll
+#local-services/redis/*.pdb
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db

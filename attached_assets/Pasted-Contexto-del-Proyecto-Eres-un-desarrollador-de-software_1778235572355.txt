@@ -1,0 +1,31 @@
+Contexto del Proyecto: Eres un desarrollador de software Senior (Next.js/React y NestJS) construyendo BioVisitor X, un Sistema de Gestión de Visitantes Enterprise integrado con el ecosistema de control de acceso físico de Suprema Inc.
+Objetivo: Desarrollar e integrar dos módulos de hardware en la interfaz de registro de visitantes (Recepción):
+Módulo de impresión de gafetes térmicos mediante la impresora Sewoo LK-B30IIE (Red/USB).
+Módulo de enrolamiento biométrico dactilar utilizando el escáner USB Suprema BioMini Slim 2 para capturar hasta 10 huellas por visitante.
+Debes implementar estas funcionalidades siguiendo estrictamente estas 5 directrices de arquitectura y seguridad física:
+1. Interfaz y Lógica de Impresión de Gafetes (Sewoo LK-B30IIE)
+UI/UX: Al finalizar el registro, despliega un botón [🖨️ Imprimir Gafete]. Al hacer clic, abre un modal con un "Preview" exacto de la credencial y un selector de impresoras locales o de red.
+Plantilla de Seguridad (Componente React): Crea un componente <SecurityBadge /> optimizado para papel térmico. Debe incluir obligatoriamente: Foto del visitante (escala de grises, alto contraste), Nombre destacado, Empresa de origen, Anfitrión (Host), Fecha/Hora (Timestamp) y el Código QR Dinámico
+.
+CSS para Impresión Térmica: La impresora Sewoo LK-B30IIE requiere medidas exactas. Utiliza @media print para forzar las dimensiones de la etiqueta (ej. 4"x3" o el estándar configurado), eliminando márgenes del navegador, URLs y headers (@page { margin: 0; }).
+Calidad del QR: El código QR debe renderizarse con un alto nivel de corrección de errores (Nivel H o Q) y un contraste puro (negro sobre blanco) para que los lectores de Suprema no fallen al leer el papel térmico en los torniquetes.
+2. Módulo de Enrolamiento Biométrico (Suprema BioMini Slim 2)
+El Reto de Hardware Web: Como la app es web (Next.js), el navegador no puede leer el puerto USB directamente por políticas de seguridad. Debes instruir al sistema para que se comunique mediante WebSockets o llamadas API a nivel localhost (127.0.0.1) con el agente local de Suprema (Suprema Device Manager / BioMini Web Agent) que estará instalado en la PC de recepción
+.
+UI del Enrolador: Añade una pestaña o botón [👆 Enrolar Huellas]. Muestra una interfaz visual con las dos manos (10 dedos). El operador debe poder seleccionar qué dedo está enrolando (del 1 al 10).
+Flujo de Captura: Al activar un dedo, el sistema debe escuchar la respuesta del BioMini Slim 2. Debes requerir que el visitante coloque el mismo dedo dos o tres veces (según el estándar del SDK) para extraer una plantilla (template) de alta calidad. Muestra una barra de progreso o un "Score" de calidad de la huella en tiempo real.
+3. Seguridad Lógica y Privacidad de Datos Biométricos (LGPD/GDPR)
+Manejo del Payload Biométrico (CRÍTICO): El escáner capturará la huella, pero NUNCA debes guardar la imagen visual (mapa de bits) de la huella en la base de datos de BioVisitor X
+.
+Tokenización: Debes procesar y guardar exclusivamente la Plantilla Biométrica (Template) encriptada (un string matemático irreversible).
+Integración con BioStar: Una vez capturadas las plantillas, el backend (NestJS) debe enviar este payload a través de la API de BioStar 2 / G-SDK (endpoint /api/users/{id}/fingerprints o equivalente) para que el controlador físico de la puerta reconozca la huella
+.
+4. Auditoría Forense (Audit Trail)
+Ambas acciones son eventos críticos de seguridad física. Debes registrar de forma asíncrona en la tabla AuditLog de PostgreSQL:
+Evento 1: IMPRESION_GAFETE (Detalles: ID visitante, Operador, Impresora seleccionada).
+Evento 2: ENROLAMIENTO_BIOMETRICO (Detalles: ID visitante, Cantidad de huellas enroladas, Score de calidad, Operador que supervisó).
+5. Arquitectura Asíncrona
+El hilo principal de React no debe bloquearse mientras la impresora Sewoo procesa la cola de impresión o mientras el BioMini Slim 2 espera que el visitante ponga su dedo. Utiliza promesas (Promises/async-await) y manejo de estados de carga (isPrinting, isScanning) para dar retroalimentación visual al recepcionista y permitir que cancele la operación si el hardware falla o se desconecta.
+
+--------------------------------------------------------------------------------
+Instrucción Final para el Agente: "Diseña los componentes frontend asegurando que el estado del hardware (Impresora Sewoo / Escáner BioMini) se controle mediante Custom Hooks en React (ej. usePrinter, useBioMiniScanner). Para el escáner, asume que existirá un servicio intermediario en localhost que expondrá la API del SDK de Suprema para abstraer la conexión USB. Documenta cómo el Backend de NestJS recibirá el arreglo de huellas y lo inyectará en la creación del usuario para BioStar 2."

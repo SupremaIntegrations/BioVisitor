@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitante en el edificio — BioVisitor X</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .wrapper {
+            max-width: 600px;
+            margin: 24px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 32px 40px;
+            text-align: center;
+            border-bottom: 4px solid #A11A36;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.55);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .alert-banner {
+            background: #f0fdf4;
+            border-bottom: 1px solid #bbf7d0;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-icon {
+            width: 36px;
+            height: 36px;
+            background: #16a34a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+        .alert-banner p {
+            font-size: 14px;
+            color: #166534;
+            font-weight: 600;
+        }
+        .alert-banner span {
+            font-size: 13px;
+            color: #4ade80;
+        }
+        .content {
+            padding: 32px 40px;
+        }
+        .greeting {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .intro {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+        .visitor-card {
+            background: #f8f9fb;
+            border: 1px solid #e8eaed;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .visitor-card h3 {
+            font-size: 11px;
+            font-weight: 700;
+            color: #A11A36;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 14px;
+        }
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 7px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 130px;
+            flex-shrink: 0;
+        }
+        .detail-value { color: #1a1a2e; }
+        .detail-value.highlight {
+            color: #A11A36;
+            font-weight: 700;
+        }
+        .checkin-time {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px 18px;
+            font-size: 13px;
+            color: #1d4ed8;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .footer {
+            background: #f8f9fb;
+            border-top: 1px solid #e8eaed;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            line-height: 1.8;
+        }
+        .footer a { color: #A11A36; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">
+            <h1>BioVisitor X</h1>
+            <p>Sistema de Gestión de Visitantes</p>
+        </div>
+
+        <div class="alert-banner">
+            <div class="alert-icon">✓</div>
+            <div>
+                <p>Visitante en recepción</p>
+                <span style="font-size:12px; color:#15803d;">Check-in completado · {{checkedInTime}}</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hola, <strong>{{hostName}}</strong></p>
+            <p class="intro">
+                Tu visitante acaba de realizar <strong>check-in</strong> en recepción y se encuentra en el edificio esperándote.
+            </p>
+
+            <div class="visitor-card">
+                <h3>Datos del Visitante</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Nombre</span>
+                    <span class="detail-value highlight">{{visitorName}}</span>
+                </div>
+                {{#if visitorCompany}}
+                <div class="detail-row">
+                    <span class="detail-label">Empresa</span>
+                    <span class="detail-value">{{visitorCompany}}</span>
+                </div>
+                {{/if}}
+                {{#if visitorDocument}}
+                <div class="detail-row">
+                    <span class="detail-label">Documento</span>
+                    <span class="detail-value">{{visitorDocument}}</span>
+                </div>
+                {{/if}}
+                {{#if purpose}}
+                <div class="detail-row">
+                    <span class="detail-label">Motivo de visita</span>
+                    <span class="detail-value">{{purpose}}</span>
+                </div>
+                {{/if}}
+            </div>
+
+            <div class="checkin-time">
+                🕐 &nbsp;Hora de ingreso: <strong>{{checkedInTime}}</strong>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Esta notificación fue generada automáticamente por <strong>BioVisitor X</strong>.</p>
+            <p>Si no eres el anfitrión de esta visita, puedes ignorar este mensaje.</p>
+            <p style="margin-top:8px; color: #bbb;">© {{year}} BioVisitor X · Todos los derechos reservados</p>
+        </div>
+    </div>
+</body>
+</html>

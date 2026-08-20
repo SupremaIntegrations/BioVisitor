@@ -1,0 +1,39 @@
+Implementación de Credenciales Multi-Modales e Híbridas en BioVisitor X
+Objetivo: Evolucionar el sistema para que un visitante no dependa únicamente de un código QR. BioVisitor X debe permitir la creación de visitantes con una o múltiples credenciales simultáneas, sincronizándolas con Suprema según las capacidades del lector físico (BioEntry W3, BioStation 3, FaceStation F2, etc.)
+.
+1. Soporte de Tipos de Credenciales (Ecosistema Suprema): El sistema debe permitir capturar, almacenar localmente y sincronizar los siguientes tipos de datos:
+Biometría: Huella dactilar (fingerprint_templates) y Rostro (IR Face o Visual Face)
+.
+Tarjetas Físicas: CSN, Wiegand o Smart Cards (MIFARE, DESFire, iCLASS)
+.
+QR/Barcode: Tanto los generados por BioStar X como QR externos
+.
+Mobile Access: Preparar la estructura para Suprema Mobile Card (NFC para Android y BLE para iOS/Android)
+.
+2. Actualización de Base de Datos y Entidad Visitor:
+Estructura de Credenciales: En lugar de campos aislados, implementar un objeto o tabla relacionada de credentials que almacene el tipo, el valor (ID de tarjeta, token de QR o template biométrico) y el estado de sincronización de cada una.
+Metadatos de Suprema: La API de BioStar devuelve contadores específicos (fingerprint_template_count, face_count, card_count, qr_count) que deben reflejarse en nuestra base de datos local para auditoría
+.
+3. Integración con Suprema API (Backend NestJS): Actualizar el SupremaSyncService para manejar payloads dinámicos en el endpoint POST /api/users o PUT /api/users/{id}:
+Sincronización Biométrica: Si se captura una huella, enviar el array fingerprint_templates con sus respectivos template0 y template1 en Base64
+.
+Sincronización de Rostro: Para dispositivos como BioStation 3 o FaceStation F2, usar el flujo de enrolamiento biométrico o subir la imagen procesada mediante el endpoint de credenciales de cara
+.
+Modos de Autenticación Privados: Implementar la capacidad de definir el auth_mode por usuario (ej: "Tarjeta + Rostro" o "Solo Huella") si el cliente lo requiere
+.
+4. Interfaz Gráfica y Reportes (Frontend Next.js):
+Enrolamiento Flexible: El formulario de registro de visitantes debe detectar qué dispositivos de enrolamiento (USB Agent) están conectados y habilitar las opciones correspondientes (Huella, Cámara para Rostro, Lector de tarjetas)
+.
+Dashboard y Logs: La tabla de visitantes y el log de eventos deben mostrar iconos visuales de las credenciales activas del visitante.
+Reportes de Salud: Incluir un módulo que verifique si las credenciales locales coinciden con las cargadas en el BioStar (Estado de Salud de Sincronización).
+5. Resiliencia y Modo Híbrido:
+Si el sistema está en modo Offline/Independiente, las credenciales se validarán contra la DB local de BioVisitor X.
+Al recuperar la conexión, el servicio de BullMQ debe realizar una sincronización masiva de todos los objetos de credenciales pendientes hacia el servidor Suprema.
+
+--------------------------------------------------------------------------------
+Notas técnicas para el desarrollador:
+Compatibilidad de Templates: Ten en cuenta que BioStar X utiliza diferentes tipos de templates de rostro según el hardware (NPU para BioStation 3 y GPU para FaceStation F2), por lo que se recomienda realizar la migración de rostros si se cambian los dispositivos
+.
+Seguridad: Toda biometría y token de tarjeta debe viajar encriptado bajo el estándar AES-256-GCM ya implementado en el backend.
+Virtual Devices: Al importar eventos de acceso de múltiples tipos de credenciales, asegúrate de mapear correctamente el user_id existente en BioStar para que los reportes sean unificados
+.

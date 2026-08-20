@@ -1,0 +1,24 @@
+Contexto: Estamos trabajando en el proyecto "BioVisitor X" (Next.js en frontend, NestJS en backend). Necesito implementar el módulo de captura de fotografía para el registro de visitantes garantizando que la imagen capturada sea compatible con la credencial "Visual Face" de Suprema BioStar 2.
+Objetivo: Crear un componente en Next.js para la captura de fotos vía WebCam y un endpoint en NestJS que valide la imagen contra el API de BioStar 2 antes de permitir el registro del visitante.
+Requerimientos del Frontend (Next.js):
+Interfaz de Captura (UI): Utiliza react-webcam. Superpón una guía visual (un óvalo) en el centro de la cámara para que el visitante alinee su rostro.
+Instrucciones en pantalla: Muestra las siguientes reglas obligatorias al usuario:
+Mirar directamente a la cámara y mantener los ojos abiertos.
+Expresión neutral (no sonreír).
+No usar gafas de sol, sombreros, ni mascarillas que cubran la nariz/boca.
+Evitar iluminación a contraluz o lugares oscuros.
+El rostro debe estar centrado y no inclinado.
+Validación del lado del cliente:
+La imagen capturada debe ser JPG, JPEG o PNG.
+El tamaño debe ser menor a 10 MB.
+La resolución mínima debe ser de 250x250 píxeles.
+Flujo de experiencia (UX): Al capturar la foto, envíala al backend. Muestra un estado de "Cargando/Validando rostro...". Si el backend responde con error, muestra un Toast/Alerta indicando: "Imagen no apta para reconocimiento facial. Por favor, asegúrese de cumplir las instrucciones y tome la foto nuevamente", y permite volver a intentarlo.
+Requerimientos del Backend (NestJS):
+Endpoint de Validación: Crea un endpoint POST /api/v1/visitors/validate-face en el módulo correspondiente que reciba la imagen en Base64.
+Limpieza del Base64: Asegúrate de remover el prefijo data:image/jpeg;base64, o similar antes de enviar la carga útil a BioStar 2, ya que Suprema requiere el string puro comenzando usualmente con /9j/....
+Integración con BioStar 2 API: Haz un llamado al endpoint de Suprema: PUT /api/users/check/upload_picture.
+Payload a enviar: {"template_ex_picture": "<Base64_String_Limpio>"}.
+Manejo de Respuesta:
+Si BioStar 2 responde con un código de éxito (Response.code === "0") y retorna los campos image e image_template (y image_template_2 según la versión), significa que el motor de IA pudo extraer el template correctamente. Retorna un HTTP 200 al frontend y almacena temporalmente los templates extraídos en Redis (con un TTL) o en el payload para enviarlos en el paso final de creación del usuario.
+Si BioStar 2 no puede detectar el rostro (por incumplir los parámetros), retornará un error. Captura este error y devuelve un HTTP 400 al frontend con el mensaje "Fallo en la extracción del template facial".
+Asegúrate de mantener la estructura de nuestro proyecto y utiliza el logger estructurado en NestJS para auditar cualquier fallo de validación del API externa. ¡No uses datos simulados (mocks) para la validación de la foto, debe conectarse al servicio suprema-gateway que ya tenemos estructurado!
