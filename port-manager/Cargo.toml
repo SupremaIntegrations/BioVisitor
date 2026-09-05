@@ -1,0 +1,40 @@
+[package]
+name = "biovisitor-port-manager"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "BioVisitorAdminTool"
+path = "src/main.rs"
+
+[dependencies]
+eframe = "0.29"
+egui = "0.29"
+windows-service = "0.7"
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_Networking_WinSock",
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Services",
+] }
+winreg = "0.52"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+rfd = "0.15"
+zip = { version = "2", default-features = false, features = ["aes-crypto", "deflate", "time"] }
+zeroize = "1"
+walkdir = "2"
+
+[build-dependencies]
+winresource = "0.1"
+
+[profile.release]
+opt-level = 2
+lto = true
+strip = true

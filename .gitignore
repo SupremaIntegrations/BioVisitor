@@ -33,9 +33,16 @@ dump.rdb
 .redis-data/
 *.rdb
 
+# Rust build output (BioVisitor Admin Tool)
+port-manager/target/
+
 # Local IDE / agent environment state (not project source)
 .local/
 .config/
+
+# Large reference PDFs — over/near GitHub's recommended file-size limit;
+# keep them locally, don't track in git.
+DocumentacionBioStarX/BioStar X_Administrator_Guide_1.0.1_EN_251226 (1).pdf
 
 # Logs
 logs/

@@ -34,9 +34,25 @@
 #define AppSupportURL     "https://www.suprema.co/soporte"
 #define AppContact        "soporte@suprema.co"
 
+; GUID fijo de identidad del producto — NO cambiar entre versiones.
+; Es lo que permite detectar una instalación previa (InitializeSetup) y
+; lo que el Administrador de Puertos/Servicios usa para ubicar el
+; directorio de instalación vía el registro de desinstalación de Windows.
+#define AppIdGuid         "{A9E9D1B4-6C3E-4B8F-9A1D-5F2E7C8B0A31}"
+
 ; Nombres de servicios Windows (no cambiar — scripts de gestión los usan)
 #define SvcBackend        "Suprema LATAM BioVisitor Service"
 #define SvcFrontend       "Suprema LATAM BioVisitor Web GUI"
+
+; Nombre de servicio dedicado para "nuestro" PostgreSQL — deliberadamente
+; distinto del nombre genérico "postgresql-x64-16" que usa el instalador
+; oficial de EDB por defecto. Un nombre y un puerto propios permiten al
+; BioVisitor Admin Tool (Rust) identificar sin ambigüedad esta instancia
+; y operarla con seguridad (start/stop/restart/cambio de puerto), incluso
+; en un servidor que ya tenga otro PostgreSQL genérico instalado para otra
+; aplicación.
+#define PgServiceName     "BioVisitor Database Service"
+#define DefaultDbPort     "55432"
 
 ; Redistribuibles — actualizar si cambias versiones
 #define PostgreSQLInstaller  "postgresql-16.14-2-windows-x64.exe"
@@ -46,6 +62,7 @@
 
 ; ── Configuración del installer ──────────────────────────────
 [Setup]
+AppId={{#AppIdGuid}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
@@ -222,10 +239,17 @@ var
   PortHTTPS: Integer;
   PortHTTP:  Integer;
   PortAPI:   Integer;
+  PortDB:    Integer;
   HasPortConflict: Boolean;
 
   // ── PostgreSQL ────────────────────────────────────────────
   PgBinPath: String;
+
+  // ── Detección de instalación previa (modo actualización) ───
+  IsUpgradeMode:   Boolean;
+  PriorInstallDir: String;
+  PriorDbPassword: String;
+  PriorDbPort:     String;
 
 
 // ─── Utilidades PowerShell ─────────────────────────────────────────────────
@@ -358,7 +382,7 @@ end;
 procedure CheckPortConflicts;
 begin
   HasPortConflict := False;
-  PortHTTPS := 443;  PortHTTP := 80;  PortAPI := 3001;
+  PortHTTPS := 443;  PortHTTP := 80;  PortAPI := 3001;  PortDB := StrToInt('{#DefaultDbPort}');
 
   if IsPortInUse(443)  then begin HasPortConflict := True; PortHTTPS := 8443; PagePorts.Values[0] := '8443'; end
                         else PagePorts.Values[0] := '443';
@@ -366,6 +390,24 @@ begin
                         else PagePorts.Values[1] := '80';
   if IsPortInUse(3001) then begin HasPortConflict := True; PortAPI   := 3002; PagePorts.Values[2] := '3002'; end
                         else PagePorts.Values[2] := '3001';
+  if IsUpgradeMode then
+  begin
+    // El puerto real de escucha de PostgreSQL no se puede cambiar aquí
+    // (requeriría editar postgresql.conf, no solo el .env) — se conserva
+    // el que ya está configurado. Cambiarlo de forma segura es tarea del
+    // BioVisitor Admin Tool, que sí coordina postgresql.conf + .env +
+    // reinicio del servicio.
+    PortDB := StrToIntDef(PriorDbPort, PortDB);
+    PagePorts.Values[3] := IntToStr(PortDB);
+  end
+  else
+  begin
+    // PortDB ya arranca en un valor no genérico (55432) precisamente para
+    // minimizar la chance de chocar con otro PostgreSQL en el servidor,
+    // pero igual se verifica por si acaso.
+    if IsPortInUse(PortDB) then begin HasPortConflict := True; PortDB := PortDB + 1; PagePorts.Values[3] := IntToStr(PortDB); end
+                            else PagePorts.Values[3] := IntToStr(PortDB);
+  end;
 end;
 
 
@@ -512,15 +554,15 @@ begin
   WizardForm.StatusLabel.Caption := 'Instalando PostgreSQL 16 (puede tardar varios minutos)...';
   Exec(Installer,
     '--mode unattended --superpassword "' + SuperPass + '"' +
-    ' --servicename "postgresql-x64-{#PostgreSQLVersion}"' +
-    ' --serverport 5432 --unattendedmodeui minimal' +
+    ' --servicename "{#PgServiceName}"' +
+    ' --serverport ' + IntToStr(PortDB) + ' --unattendedmodeui minimal' +
     ' --disable-components stackbuilder',
     '', SW_HIDE, ewWaitUntilTerminated, RC);
 
   // Esperar a que PostgreSQL arranque (máx 60 seg)
   Exec('powershell.exe',
     '-NoProfile -Command "1..30 | ForEach-Object { Start-Sleep 2; ' +
-    'if ((Get-Service ''postgresql-x64-{#PostgreSQLVersion}'' -ErrorAction SilentlyContinue).Status -eq ''Running'') { exit 0 } }; exit 1"',
+    'if ((Get-Service ''{#PgServiceName}'' -ErrorAction SilentlyContinue).Status -eq ''Running'') { exit 0 } }; exit 1"',
     '', SW_HIDE, ewWaitUntilTerminated, RC);
 
   PgBinPath := FindPgBin;
@@ -545,17 +587,17 @@ begin
   // sobre el esquema "public" — desde PostgreSQL 15 ya no se concede
   // CREATE en "public" a roles no-propietarios por defecto.
   Exec(PgBinPath + '\createdb.exe',
-    '-U postgres -h 127.0.0.1 -p 5432 biovisitor_db',
+    '-U postgres -h 127.0.0.1 -p ' + IntToStr(PortDB) + ' biovisitor_db',
     '', SW_HIDE, ewWaitUntilTerminated, RC);
 
   WizardForm.StatusLabel.Caption := 'Creando tablas (schema.sql)...';
   Exec(PsqlExe,
-    '-U postgres -h 127.0.0.1 -p 5432 -d biovisitor_db -f "' + WizardDirValue + '\db\schema.sql"',
+    '-U postgres -h 127.0.0.1 -p ' + IntToStr(PortDB) + ' -d biovisitor_db -f "' + WizardDirValue + '\db\schema.sql"',
     '', SW_HIDE, ewWaitUntilTerminated, RC);
 
   WizardForm.StatusLabel.Caption := 'Cargando datos iniciales (seed.sql)...';
   Exec(PsqlExe,
-    '-U postgres -h 127.0.0.1 -p 5432 -d biovisitor_db -f "' + WizardDirValue + '\db\seed.sql"',
+    '-U postgres -h 127.0.0.1 -p ' + IntToStr(PortDB) + ' -d biovisitor_db -f "' + WizardDirValue + '\db\seed.sql"',
     '', SW_HIDE, ewWaitUntilTerminated, RC);
 
   SetEnvironmentVariable('PGPASSWORD', '');
@@ -651,7 +693,7 @@ begin
     '' + #13#10 +
     '# PostgreSQL' + #13#10 +
     'DB_HOST=localhost' + #13#10 +
-    'DB_PORT=5432' + #13#10 +
+    'DB_PORT=' + IntToStr(PortDB) + #13#10 +
     'DB_USERNAME=postgres' + #13#10 +
     'DB_PASSWORD=' + SuperPass + #13#10 +
     'DB_NAME=biovisitor_db' + #13#10 +
@@ -702,6 +744,100 @@ begin
 
   SaveStringToFile(EnvPath, EnvContent, False);
   ForceDirectories(InstallDir + '\backend\uploads\photos');
+end;
+
+
+// ─── Actualización del .env del backend (modo upgrade) ─────────────────────
+// A diferencia de WriteBackendEnv (que regenera todo el archivo con
+// secretos nuevos), esta procedimiento conserva TODO el .env existente tal
+// cual — incluyendo DB_PASSWORD, JWT_SECRET, ENCRYPTION_MASTER_KEY y
+// QR_JWT_SECRET — y solo reemplaza las claves que el wizard permite tocar
+// en una actualización (puerto API, URLs derivadas de la IP, y SMTP solo
+// si el usuario escribió algo nuevo). Regenerar esos secretos en cada
+// actualización invalidaría todas las sesiones activas y, en el caso de
+// ENCRYPTION_MASTER_KEY, dejaría indescifrables las credenciales de
+// BioStar ya guardadas en la base de datos existente.
+procedure PatchBackendEnvForUpgrade(InstallDir, SelectedIP: String);
+var
+  EnvPath:  String;
+  Lines:    TArrayOfString;
+  OutLines: TStringList;
+  I:        Integer;
+  Line:     String;
+  Handled:  Boolean;
+  SmtpHost, SmtpPort, SmtpUser, SmtpPass, SmtpFrom, SmtpName: String;
+begin
+  EnvPath := InstallDir + '\backend\.env';
+  if not LoadStringsFromFile(EnvPath, Lines) then
+  begin
+    // No debería ocurrir en modo upgrade (ya se confirmó antes que el
+    // .env existe), pero si pasa, no dejamos el backend sin configurar:
+    // regeneramos desde cero reutilizando la contraseña de PostgreSQL ya
+    // conocida en vez de fallar silenciosamente.
+    WriteBackendEnv(InstallDir, PriorDbPassword, SelectedIP);
+    Exit;
+  end;
+
+  SmtpHost := Trim(PageSmtp.Values[0]);
+  SmtpPort := Trim(PageSmtp.Values[1]);
+  SmtpUser := Trim(PageSmtp.Values[2]);
+  SmtpPass := Trim(PageSmtp.Values[3]);
+  SmtpFrom := Trim(PageSmtp.Values[4]);
+  SmtpName := Trim(PageSmtp.Values[5]);
+  if SmtpPort = '' then SmtpPort := '587';
+  if SmtpFrom = '' then SmtpFrom := SmtpUser;
+
+  OutLines := TStringList.Create;
+  try
+    for I := 0 to GetArrayLength(Lines) - 1 do
+    begin
+      Line    := Lines[I];
+      Handled := False;
+
+      if Copy(Line, 1, 9) = 'APP_PORT=' then
+      begin OutLines.Add('APP_PORT=' + IntToStr(PortAPI)); Handled := True; end
+      else if Copy(Line, 1, 8) = 'DB_PORT=' then
+      // PortDB ya quedó forzado al valor existente en modo actualización
+      // (ver NextButtonClick) — esto es un no-op salvo que en el futuro
+      // el BioVisitor Admin Tool haya movido el puerto real de Postgres.
+      begin OutLines.Add('DB_PORT=' + IntToStr(PortDB)); Handled := True; end
+      else if Copy(Line, 1, 13) = 'FRONTEND_URL=' then
+      begin
+        OutLines.Add('FRONTEND_URL=https://' + SelectedIP +
+          IfThen(PortHTTPS <> 443, ':' + IntToStr(PortHTTPS), ''));
+        Handled := True;
+      end
+      else if Copy(Line, 1, 21) = 'CORS_ALLOWED_ORIGINS=' then
+      begin
+        OutLines.Add('CORS_ALLOWED_ORIGINS=https://' + SelectedIP +
+          IfThen(PortHTTPS <> 443, ':' + IntToStr(PortHTTPS), ''));
+        Handled := True;
+      end
+      // Los campos SMTP solo se tocan si el admin escribió algo nuevo en
+      // el wizard — dejar en blanco esa página en una actualización debe
+      // conservar el SMTP ya configurado, no borrarlo.
+      else if (SmtpHost <> '') and (Copy(Line, 1, 10) = 'SMTP_HOST=') then
+      begin OutLines.Add('SMTP_HOST=' + SmtpHost); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 10) = 'SMTP_PORT=') then
+      begin OutLines.Add('SMTP_PORT=' + SmtpPort); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 12) = 'SMTP_SECURE=') then
+      begin OutLines.Add('SMTP_SECURE=' + IfThen(SmtpPort = '465', 'true', 'false')); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 10) = 'SMTP_USER=') then
+      begin OutLines.Add('SMTP_USER=' + SmtpUser); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 14) = 'SMTP_PASSWORD=') then
+      begin OutLines.Add('SMTP_PASSWORD=' + SmtpPass); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 10) = 'SMTP_FROM=') then
+      begin OutLines.Add('SMTP_FROM=' + SmtpFrom); Handled := True; end
+      else if (SmtpHost <> '') and (Copy(Line, 1, 15) = 'SMTP_FROM_NAME=') then
+      begin OutLines.Add('SMTP_FROM_NAME=' + SmtpName); Handled := True; end;
+
+      if not Handled then OutLines.Add(Line);
+    end;
+
+    OutLines.SaveToFile(EnvPath);
+  finally
+    OutLines.Free;
+  end;
 end;
 
 
@@ -848,9 +984,11 @@ begin
   PagePorts.Add('Puerto HTTPS  (acceso principal, navegadores):', False);
   PagePorts.Add('Puerto HTTP   (redirige automáticamente a HTTPS):', False);
   PagePorts.Add('Puerto API    (backend interno — no exponer):', False);
+  PagePorts.Add('Puerto de PostgreSQL dedicado (BioVisitor Database Service):', False);
   PagePorts.Values[0] := '443';
   PagePorts.Values[1] := '80';
   PagePorts.Values[2] := '3001';
+  PagePorts.Values[3] := '{#DefaultDbPort}';
 
   // ── Página: Configuración SMTP ────────────────────────────────────────
   PageSmtp := CreateInputQueryPage(PagePorts.ID,
@@ -867,6 +1005,28 @@ begin
   PageSmtp.Add('Nombre del remitente:', False);
   PageSmtp.Values[1] := '587';
   PageSmtp.Values[5] := 'BioVisitor — Suprema LATAM';
+end;
+
+
+// ─── Omitir páginas en modo actualización ─────────────────────────────────
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  // En una actualización ya conocemos la contraseña de PostgreSQL (se leyó
+  // del backend\.env existente en InitializeSetup) — no volver a pedirla.
+  Result := IsUpgradeMode and (PageID = PageDbCreds.ID);
+end;
+
+
+// ─── Poblar la lista de NICs al entrar a esa página ───────────────────────
+// Antes se poblaba al salir de PageDbCreds (NextButtonClick), pero esa
+// página se omite en modo actualización (ShouldSkipPage) — poblarla al
+// ENTRAR a PageNicSelect funciona en ambos flujos y también se refresca
+// correctamente si el usuario navega hacia atrás y adelante otra vez.
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = PageNicSelect.ID then
+    PopulateNicList;
 end;
 
 
@@ -897,9 +1057,6 @@ begin
       MsgBox('La contraseña debe tener al menos 8 caracteres.', mbError, MB_OK);
       Result := False; Exit;
     end;
-
-    // Cargar la lista de NICs al avanzar desde DB creds
-    PopulateNicList;
   end;
 
   // ── Validar selección NIC ─────────────────────────────────────────────
@@ -926,6 +1083,13 @@ begin
     PortHTTPS := StrToIntDef(PagePorts.Values[0], 0);
     PortHTTP  := StrToIntDef(PagePorts.Values[1], 0);
     PortAPI   := StrToIntDef(PagePorts.Values[2], 0);
+    PortDB    := StrToIntDef(PagePorts.Values[3], 0);
+
+    // En modo actualización el puerto de PostgreSQL no es editable desde
+    // este wizard (ver comentario en CheckPortConflicts) — se ignora
+    // cualquier valor que el usuario haya escrito en ese campo.
+    if IsUpgradeMode then
+      PortDB := StrToIntDef(PriorDbPort, PortDB);
 
     if (PortHTTPS < 1) or (PortHTTPS > 65535) then begin
       MsgBox('Puerto HTTPS inválido (rango: 1–65535).', mbError, MB_OK); Result := False; Exit;
@@ -936,11 +1100,17 @@ begin
     if (PortAPI < 1) or (PortAPI > 65535) then begin
       MsgBox('Puerto API inválido (rango: 1–65535).', mbError, MB_OK); Result := False; Exit;
     end;
+    if (PortDB < 1) or (PortDB > 65535) then begin
+      MsgBox('Puerto de PostgreSQL inválido (rango: 1–65535).', mbError, MB_OK); Result := False; Exit;
+    end;
     if PortHTTPS = PortHTTP then begin
       MsgBox('El puerto HTTPS y el HTTP no pueden ser iguales.', mbError, MB_OK); Result := False; Exit;
     end;
     if PortHTTPS = PortAPI then begin
       MsgBox('El puerto HTTPS y el API no pueden ser iguales.', mbError, MB_OK); Result := False; Exit;
+    end;
+    if (PortDB = PortHTTPS) or (PortDB = PortHTTP) or (PortDB = PortAPI) then begin
+      MsgBox('El puerto de PostgreSQL debe ser distinto de los demás puertos.', mbError, MB_OK); Result := False; Exit;
     end;
   end;
 
@@ -995,39 +1165,57 @@ begin
     LogInstallStep(InstallDir, 'Node.js: ERROR - ' + GetExceptionMessage);
   end;
 
-  // 2 – Redis
+  // 2 – Redis (se omite en modo actualización: ya está instalado)
+  if not IsUpgradeMode then
   try
     WizardForm.StatusLabel.Caption := 'Instalando Redis...';
     InstallRedis;
     LogInstallStep(InstallDir, 'Redis: OK');
   except
     LogInstallStep(InstallDir, 'Redis: ERROR - ' + GetExceptionMessage);
-  end;
+  end
+  else
+    LogInstallStep(InstallDir, 'Redis: omitido (modo actualización)');
 
-  // 3 – PostgreSQL
+  // 3 – PostgreSQL (se omite en modo actualización: ya está instalado, y
+  //     SuperPass está vacío porque no se mostró la página de credenciales)
+  if not IsUpgradeMode then
   try
     WizardForm.StatusLabel.Caption := 'Instalando PostgreSQL 16...';
     InstallPostgreSQL(SuperPass);
     LogInstallStep(InstallDir, 'PostgreSQL: OK');
   except
     LogInstallStep(InstallDir, 'PostgreSQL: ERROR - ' + GetExceptionMessage);
-  end;
+  end
+  else
+    LogInstallStep(InstallDir, 'PostgreSQL: omitido (modo actualización)');
 
-  // 4 – Base de datos: schema + seed
+  // 4 – Base de datos: schema + seed (se omite en modo actualización — ya
+  //     existen las tablas y los datos; volver a correr schema.sql fallaría
+  //     o, peor, podría machacar datos existentes)
+  if not IsUpgradeMode then
   try
     WizardForm.StatusLabel.Caption := 'Configurando base de datos...';
     CreateDatabase(SuperPass);
     LogInstallStep(InstallDir, 'Base de datos: OK');
   except
     LogInstallStep(InstallDir, 'Base de datos: ERROR - ' + GetExceptionMessage);
-  end;
+  end
+  else
+    LogInstallStep(InstallDir, 'Base de datos: omitida (modo actualización, se conserva la existente)');
 
   // 5 – Archivo .env del backend (se escribe temprano a propósito: es lo
   //     más importante y no debe depender de que los pasos siguientes,
-  //     más frágiles por depender de herramientas externas, funcionen)
+  //     más frágiles por depender de herramientas externas, funcionen).
+  //     En modo actualización se PARCHEA el .env existente en vez de
+  //     regenerarlo — ver comentario en PatchBackendEnvForUpgrade sobre
+  //     por qué regenerar los secretos en cada actualización sería dañino.
   try
     WizardForm.StatusLabel.Caption := 'Generando configuración del backend...';
-    WriteBackendEnv(InstallDir, SuperPass, SelectedIP);
+    if IsUpgradeMode then
+      PatchBackendEnvForUpgrade(InstallDir, SelectedIP)
+    else
+      WriteBackendEnv(InstallDir, SuperPass, SelectedIP);
     LogInstallStep(InstallDir, '.env del backend: OK (' + InstallDir + '\backend\.env)');
   except
     LogInstallStep(InstallDir, '.env del backend: ERROR - ' + GetExceptionMessage);
@@ -1109,6 +1297,7 @@ var
   PgBin:   String;
   PsqlExe: String;
   SuperPw: String;
+  DbPort:  String;
   TmpSql:  String;
   RC:      Integer;
 begin
@@ -1139,6 +1328,9 @@ begin
         Exit;
       end;
 
+      DbPort := ReadEnvValue(ExpandConstant('{app}') + '\backend\.env', 'DB_PORT');
+      if DbPort = '' then DbPort := '{#DefaultDbPort}';
+
       PgBin := FindPgBin;
       if PgBin = '' then
       begin
@@ -1159,7 +1351,7 @@ begin
         False);
 
       Exec(PsqlExe,
-        '-U postgres -h 127.0.0.1 -p 5432 -f "' + TmpSql + '"',
+        '-U postgres -h 127.0.0.1 -p ' + DbPort + ' -f "' + TmpSql + '"',
         '', SW_HIDE, ewWaitUntilTerminated, RC);
 
       SetEnvironmentVariable('PGPASSWORD', '');
@@ -1177,9 +1369,66 @@ end;
 // ─── Inicialización global ─────────────────────────────────────────────────
 
 function InitializeSetup: Boolean;
+var
+  UninstallKey: String;
+  Answer:       Integer;
 begin
-  DetectedCountry := DetectCountry;
   Result := True;
+  DetectedCountry := DetectCountry;
+
+  IsUpgradeMode   := False;
+  PriorInstallDir := '';
+  PriorDbPassword := '';
+
+  // ── Detección de instalación previa ───────────────────────────────────
+  // Se usa la clave de desinstalación de Windows (indexada por AppId, fijo
+  // entre versiones) en vez de solo comprobar la carpeta por defecto, para
+  // detectar también instalaciones hechas en un directorio distinto.
+  UninstallKey := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\' +
+    '{#AppIdGuid}' + '_is1';
+
+  if RegKeyExists(HKLM, UninstallKey) then
+  begin
+    RegQueryStringValue(HKLM, UninstallKey, 'Inno Setup: App Path', PriorInstallDir);
+
+    if (PriorInstallDir <> '') and DirExists(PriorInstallDir) then
+    begin
+      Answer := MsgBox(
+        'Se detectó una instalación existente de BioVisitor X en:' + #13#10 +
+        '  ' + PriorInstallDir + #13#10 + #13#10 +
+        '¿Desea continuar y ACTUALIZARLA?' + #13#10 +
+        '(Se conservará la base de datos, las credenciales y la clave de' + #13#10 +
+        ' cifrado existentes — no se le volverá a pedir la contraseña de' + #13#10 +
+        ' PostgreSQL.)' + #13#10 + #13#10 +
+        'Elija "No" para cancelar este instalador y ejecutar primero' + #13#10 +
+        'el desinstalador si prefiere una instalación limpia.',
+        mbConfirmation, MB_YESNO or MB_DEFBUTTON1);
+
+      if Answer = IDNO then
+      begin
+        Result := False;
+        Exit;
+      end;
+
+      IsUpgradeMode := True;
+
+      if not FileExists(PriorInstallDir + '\backend\.env') then
+      begin
+        MsgBox(
+          'No se encontró backend\.env en la instalación existente.' + #13#10 +
+          'Se continuará como actualización, pero no fue posible leer la' + #13#10 +
+          'contraseña de PostgreSQL — si falla la configuración de la base' + #13#10 +
+          'de datos, complétela manualmente después de instalar.',
+          mbInformation, MB_OK);
+      end
+      else
+      begin
+        PriorDbPassword := ReadEnvValue(PriorInstallDir + '\backend\.env', 'DB_PASSWORD');
+        PriorDbPort     := ReadEnvValue(PriorInstallDir + '\backend\.env', 'DB_PORT');
+        if PriorDbPort = '' then PriorDbPort := '{#DefaultDbPort}';
+      end;
+    end;
+  end;
 end;
 
 procedure DeinitializeSetup;
@@ -1201,15 +1450,19 @@ begin
 
   Result :=
     'Resumen de instalación:' + NewLine + NewLine +
+    Space + 'Modo            : ' + IfThen(IsUpgradeMode,
+      'Actualización (instalación existente detectada)', 'Instalación nueva') + NewLine +
     Space + 'Directorio      : ' + WizardDirValue + NewLine +
     Space + 'IP del servidor : ' + IP + NewLine +
     Space + 'País SSL        : ' + DetectedCountry + NewLine +
     Space + 'Puerto HTTPS    : ' + IntToStr(PortHTTPS) + NewLine +
     Space + 'Puerto HTTP     : ' + IntToStr(PortHTTP) + NewLine +
     Space + 'Puerto API      : ' + IntToStr(PortAPI) + NewLine +
+    Space + 'Puerto PostgreSQL: ' + IntToStr(PortDB) + NewLine +
     NewLine +
-    Space + 'Servicio backend  : {#SvcBackend}' + NewLine +
-    Space + 'Servicio frontend : {#SvcFrontend}' + NewLine +
+    Space + 'Servicio backend    : {#SvcBackend}' + NewLine +
+    Space + 'Servicio frontend   : {#SvcFrontend}' + NewLine +
+    Space + 'Servicio PostgreSQL : {#PgServiceName}' + NewLine +
     NewLine;
 
   if SmtpHost <> '' then
