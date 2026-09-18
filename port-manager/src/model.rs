@@ -80,8 +80,6 @@ pub enum AppError {
     ServiceOther(String, String),
     #[error("Error leyendo/escribiendo el archivo de configuración: {0}")]
     EnvFile(String),
-    #[error("nssm.exe terminó con código {exit_code}: {stderr}")]
-    Nssm { exit_code: i32, stderr: String },
     #[error("{0}")]
     Other(String),
 }

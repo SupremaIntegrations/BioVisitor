@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useUrlToken } from '@/lib/useUrlToken';
 import {
     CheckCircle2, AlertTriangle, Loader2, ChevronRight, ChevronLeft,
     User, Building2, CreditCard, Calendar, Clock, Shield,
@@ -301,7 +301,7 @@ function Step2({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
-    const { token } = useParams<{ token: string }>();
+    const token = useUrlToken();
 
     const [loadState, setLoadState] = useState<'loading' | 'invalid' | 'used' | 'ready'>('loading');
     const [visitInfo, setVisitInfo] = useState<VisitInfo | null>(null);

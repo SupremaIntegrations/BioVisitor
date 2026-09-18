@@ -8,7 +8,7 @@ mod env_file;
 mod install_dir;
 mod logging;
 mod model;
-mod nssm;
+mod nginx_conf;
 mod port_check;
 mod postgres_conf;
 mod postgres_tools;

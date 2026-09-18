@@ -5,11 +5,10 @@
 ;  Plataforma: Windows 10/11/Server 2016+  (x64)
 ;
 ;  Instala:
-;   - Node.js 24 LTS (si no está)
-;   - PostgreSQL 16 (unattended)
+;   - PostgreSQL 16 (unattended) — servicio dedicado "BioVisitor Database Service"
 ;   - Redis for Windows (servicio)
-;   - Backend NestJS (.exe via pkg)
-;   - Frontend Next.js standalone (HTTPS nativo)
+;   - Backend NestJS (.exe autocontenido via pkg — no requiere Node.js)
+;   - Frontend Next.js (SPA estática, output: 'export') servida por nginx
 ;   - Certificado SSL autofirmado (7 años, Suprema LATAM)
 ;   - Servicios Windows via NSSM:
 ;       "Suprema LATAM BioVisitor Service"
@@ -51,14 +50,27 @@
 ; y operarla con seguridad (start/stop/restart/cambio de puerto), incluso
 ; en un servidor que ya tenga otro PostgreSQL genérico instalado para otra
 ; aplicación.
-#define PgServiceName     "BioVisitor Database Service"
+; Con guiones, SIN espacios: el instalador unattended de EDB (InstallBuilder)
+; rechaza --servicename con espacios ("... is not a valid name") —
+; confirmado en una prueba real de instalación. Los servicios de backend/
+; frontend SÍ llevan espacios porque los registra NSSM directamente contra
+; la API de Windows (CreateService), que no tiene esa restricción — la
+; validación adicional es propia del instalador de EDB, no de Windows.
+; Los guiones son seguros: el nombre por defecto de EDB ("postgresql-x64-16")
+; también los usa.
+#define PgServiceName     "Suprema-LATAM-BioVisitor-Database-Service"
 #define DefaultDbPort     "55432"
 
 ; Redistribuibles — actualizar si cambias versiones
 #define PostgreSQLInstaller  "postgresql-16.14-2-windows-x64.exe"
 #define RedisInstaller       "Redis-x64-5.0.14.1.msi"
-#define NodeInstaller        "node-v24.19.0-x64.msi"
 #define PostgreSQLVersion    "16"
+
+; nginx sirve el frontend (SPA estática) — reemplaza a Node.js + server-https.js.
+; El backend ya es un .exe autocontenido (pkg) y no necesita Node en runtime,
+; así que Node.js dejó de ser un prerrequisito de esta instalación.
+#define NginxVersion         "1.30.4"
+#define NginxRedistDir       "..\redist\nginx-" + NginxVersion
 
 ; ── Configuración del installer ──────────────────────────────
 [Setup]
@@ -83,7 +95,7 @@ OutputBaseFilename=BioVisitorX-Setup-{#AppVersion}
 
 ; Icono del installer — coloca biovisitor.ico en windows-deployment\assets\
 ; Si no existe, comenta la línea siguiente o el compilador dará error.
-; SetupIconFile=..\assets\biovisitor.ico
+SetupIconFile=..\assets\biovisitor.ico
 
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -117,15 +129,21 @@ Name: "desktopicon"; Description: "Crear acceso directo en el &Escritorio"; \
 Source: "..\..\biovisitor-backend\biovisitor-backend.exe"; \
   DestDir: "{app}\backend"; Flags: skipifsourcedoesntexist ignoreversion
 
-; Frontend standalone
-Source: "..\..\biovisitor-frontend\.next\standalone\*"; \
-  DestDir: "{app}\frontend"; Flags: recursesubdirs createallsubdirs
+; Frontend — SPA estática (next build con output: 'export')
+Source: "..\..\biovisitor-frontend\out\*"; \
+  DestDir: "{app}\frontend\out"; Flags: recursesubdirs createallsubdirs
 
-; Wrapper HTTPS del frontend (termina TLS y hace proxy al server.js interno de Next.js)
-Source: "..\assets\server-https.js"; DestDir: "{app}\frontend"; Flags: ignoreversion
+; nginx for Windows — sirve el frontend y hace de proxy/TLS hacia el backend
+; (reemplaza a Node.js + server-https.js)
+Source: "{#NginxRedistDir}\*"; \
+  DestDir: "{app}\nginx"; Flags: recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 ; Herramientas
 Source: "..\tools\nssm.exe"; DestDir: "{app}\tools"; Flags: ignoreversion
+
+; BioVisitor Admin Tool (Rust) — administra puertos, servicios y backups
+Source: "..\..\port-manager\target\release\BioVisitorAdminTool.exe"; \
+  DestDir: "{app}\admin-tool"; Flags: ignoreversion
 
 ; Scripts de gestión
 Source: "..\scripts\3-start-all.bat";        DestDir: "{app}\scripts"
@@ -133,6 +151,10 @@ Source: "..\scripts\stop-all.bat";           DestDir: "{app}\scripts"
 Source: "..\scripts\restart-all.bat";        DestDir: "{app}\scripts"
 Source: "..\scripts\status.bat";             DestDir: "{app}\scripts"
 Source: "..\scripts\uninstall-services.bat"; DestDir: "{app}\scripts"
+
+; Plantilla de nginx.conf (se procesa y escribe en {app}\nginx\conf\nginx.conf
+; durante la instalación — ver GenerateNginxConf)
+Source: "..\assets\nginx.conf.template"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 ; Base de datos
 Source: "..\db\schema.sql"; DestDir: "{app}\db"
@@ -145,8 +167,6 @@ Source: "RELEASE_NOTES.txt"; DestDir: "{app}"
 Source: "..\redist\{#PostgreSQLInstaller}"; DestDir: "{tmp}"; \
   Flags: deleteafterinstall skipifsourcedoesntexist
 Source: "..\redist\{#RedisInstaller}"; DestDir: "{tmp}"; \
-  Flags: deleteafterinstall skipifsourcedoesntexist
-Source: "..\redist\{#NodeInstaller}"; DestDir: "{tmp}"; \
   Flags: deleteafterinstall skipifsourcedoesntexist
 
 ; ── Iconos y accesos directos ────────────────────────────────
@@ -163,6 +183,8 @@ Name: "{group}\Estado servicios"; \
   Filename: "{app}\scripts\status.bat"
 Name: "{group}\Notas de versión"; \
   Filename: "{app}\RELEASE_NOTES.txt"
+Name: "{group}\BioVisitor Admin Tool"; \
+  Filename: "{app}\admin-tool\BioVisitorAdminTool.exe"
 Name: "{group}\Desinstalar BioVisitor X"; \
   Filename: "{uninstallexe}"
 
@@ -195,6 +217,21 @@ Filename: "netsh.exe"; \
 Filename: "netsh.exe"; \
   Parameters: "advfirewall firewall delete rule name=""BioVisitor HTTP"""; \
   Flags: runhidden; RunOnceId: "FwHTTP"
+
+; Archivos/directorios generados en tiempo de ejecución que Inno no puede
+; rastrear automáticamente porque no vinieron de [Files] (fotos subidas,
+; .env con secretos, certificado SSL, logs, acceso directo generado).
+; Solo se borran si el usuario confirmó el borrado total en
+; CurUninstallStepChanged (ver ShouldDeleteAllData) — si eligió conservar
+; los datos, estos archivos quedan intactos para poder recuperarlos.
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\backend\uploads";  Check: ShouldDeleteAllData
+Type: filesandordirs; Name: "{app}\frontend\cert";     Check: ShouldDeleteAllData
+Type: filesandordirs; Name: "{app}\logs";              Check: ShouldDeleteAllData
+Type: filesandordirs; Name: "{app}\nginx\logs";        Check: ShouldDeleteAllData
+Type: filesandordirs; Name: "{app}\nginx\temp";        Check: ShouldDeleteAllData
+Type: files;          Name: "{app}\backend\.env";      Check: ShouldDeleteAllData
+Type: files;          Name: "{app}\BioVisitor.url";    Check: ShouldDeleteAllData
 
 ; ══════════════════════════════════════════════════════════════
 ;  CÓDIGO PASCAL — Toda la lógica del wizard
@@ -250,6 +287,13 @@ var
   PriorInstallDir: String;
   PriorDbPassword: String;
   PriorDbPort:     String;
+
+  // ── Desinstalación completa ("eliminar TODOS los datos") ───
+  // Leída por [UninstallDelete] vía ShouldDeleteAllData (Check:) para que
+  // los archivos generados en tiempo de ejecución (fotos subidas, .env con
+  // secretos, certificados, logs) solo se borren si el usuario confirmó
+  // el borrado total en CurUninstallStepChanged.
+  DeleteAllData: Boolean;
 
 
 // ─── Utilidades PowerShell ─────────────────────────────────────────────────
@@ -411,22 +455,6 @@ begin
 end;
 
 
-// ─── Node.js ───────────────────────────────────────────────────────────────
-
-function NodeIsInstalled: Boolean;
-var RC: Integer;
-begin
-  Exec('node.exe', '--version', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Result := (RC = 0);
-end;
-
-function GetNodeExePath: String;
-begin
-  Result := RunPS('(Get-Command node -ErrorAction SilentlyContinue).Source');
-  if Result = '' then Result := 'node.exe';
-end;
-
-
 // ─── PostgreSQL ────────────────────────────────────────────────────────────
 
 function FindPgBin: String;
@@ -517,21 +545,34 @@ begin
   end
   else
   begin
-    // Fallback: PowerShell New-SelfSignedCertificate
+    // Fallback: PowerShell New-SelfSignedCertificate.
+    // IMPORTANTE: -DnsName y un -TextExtension manual de subjectAltName
+    // (OID 2.5.29.17) son INCOMPATIBLES — New-SelfSignedCertificate lanza
+    // una excepción terminante si se combinan, porque -DnsName ya genera
+    // esa misma extensión por su cuenta. Eso abortaba el script ANTES de
+    // llegar a escribir server.crt, dejando un archivo vacío/inexistente
+    // que nginx no podía parsear ("no start line"). Se pasa el IP real
+    // como un -DnsName más (el cmdlet detecta que es una IP y genera un
+    // SAN de tipo iPAddress, no dNSName) en vez de un TextExtension manual.
     PSScript :=
       '$ip = ''' + SelectedIP + '''' + #13#10 +
       '$d  = ''' + CertDir + '''' + #13#10 +
       '$c  = New-SelfSignedCertificate -Subject "CN=$ip,O=Suprema LATAM,OU=BioVisitor,C=' + CountryCode + '" ' +
-      '  -DnsName "localhost" -NotAfter (Get-Date).AddYears(7) ' +
+      '  -DnsName $ip, "localhost", "127.0.0.1" -NotAfter (Get-Date).AddYears(7) ' +
       '  -KeyAlgorithm RSA -KeyLength 2048 -HashAlgorithm SHA256 ' +
-      '  -TextExtension @("2.5.29.17={text}IPAddress=$ip&DNSName=localhost&IPAddress=127.0.0.1") ' +
       '  -CertStoreLocation "Cert:\LocalMachine\My" -KeyExportPolicy Exportable' + #13#10 +
+      'if (-not $c) { throw "New-SelfSignedCertificate no devolvio un certificado" }' + #13#10 +
       '$cp = "-----BEGIN CERTIFICATE-----`n" + [Convert]::ToBase64String($c.RawData,"InsertLineBreaks") + "`n-----END CERTIFICATE-----"' + #13#10 +
       '[IO.File]::WriteAllText("$d\server.crt", $cp)' + #13#10 +
       '$r  = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($c)' + #13#10 +
       '$kp = "-----BEGIN RSA PRIVATE KEY-----`n" + [Convert]::ToBase64String($r.ExportRSAPrivateKey(),"InsertLineBreaks") + "`n-----END RSA PRIVATE KEY-----"' + #13#10 +
       '[IO.File]::WriteAllText("$d\server.key", $kp)';
-    RunPSFile(PSScript);
+    RC := RunPSFile(PSScript);
+    if (RC <> 0) or (not FileExists(CertDir + '\server.crt')) then
+      MsgBox('No se pudo generar el certificado SSL automáticamente.' + #13#10 +
+             'El frontend (nginx) no podrá arrancar hasta generar' + #13#10 +
+             'manualmente server.crt/server.key en:' + #13#10 + CertDir,
+             mbError, MB_OK);
   end;
 
   // Importar al almacén Root de Windows
@@ -625,20 +666,6 @@ begin
 end;
 
 
-// ─── Instalación de Node.js ────────────────────────────────────────────────
-
-procedure InstallNodeJS;
-var
-  Msi: String;
-  RC:  Integer;
-begin
-  if NodeIsInstalled then Exit;
-  Msi := ExpandConstant('{tmp}') + '\{#NodeInstaller}';
-  if not FileExists(Msi) then Exit;
-  WizardForm.StatusLabel.Caption := 'Instalando Node.js 24 LTS...';
-  Exec('msiexec.exe', '/i "' + Msi + '" /quiet /norestart ADDLOCAL=ALL',
-    '', SW_HIDE, ewWaitUntilTerminated, RC);
-end;
 
 
 // ─── Generación del .env del backend ──────────────────────────────────────
@@ -841,12 +868,54 @@ begin
 end;
 
 
+// ─── Generación de nginx.conf ──────────────────────────────────────────────
+// Lee la plantilla nginx.conf.template (empaquetada en {tmp}) y sustituye
+// los placeholders {{PORT_HTTPS}}/{{PORT_HTTP}}/{{PORT_API}}/{{INSTALL_DIR}}
+// con los valores reales, escribiendo el resultado en
+// {app}\nginx\conf\nginx.conf (sobreescribe el nginx.conf de ejemplo que
+// trae el ZIP de nginx). nginx en Windows resuelve las rutas relativas de
+// su config contra el directorio de trabajo del proceso — por eso todas
+// las rutas aquí van absolutas, y por eso NSSM debe arrancar nginx.exe con
+// AppDirectory = {app}\nginx (ver InstallNSSMServices) sin necesidad de
+// pasarle -p/-c como parámetros.
+procedure GenerateNginxConf(InstallDir: String);
+var
+  TemplatePath:  String;
+  RawContent:    AnsiString;
+  Content:       String;
+  InstallDirFwd: String;
+begin
+  TemplatePath := ExpandConstant('{tmp}') + '\nginx.conf.template';
+  if not LoadStringFromFile(TemplatePath, RawContent) then
+  begin
+    MsgBox('No se encontró nginx.conf.template. El frontend no podrá arrancar.', mbError, MB_OK);
+    Exit;
+  end;
+  // LoadStringFromFile/SaveStringToFile trabajan con AnsiString; StringChangeEx
+  // con String — de ahí la conversión de ida y vuelta.
+  Content := String(RawContent);
+
+  // nginx en Windows recomienda "/" en las rutas del config para evitar
+  // problemas de escape con la barra invertida.
+  InstallDirFwd := InstallDir;
+  StringChangeEx(InstallDirFwd, '\', '/', True);
+
+  StringChangeEx(Content, '{{PORT_HTTPS}}',  IntToStr(PortHTTPS), True);
+  StringChangeEx(Content, '{{PORT_HTTP}}',   IntToStr(PortHTTP),  True);
+  StringChangeEx(Content, '{{PORT_API}}',    IntToStr(PortAPI),   True);
+  StringChangeEx(Content, '{{INSTALL_DIR}}', InstallDirFwd,       True);
+
+  ForceDirectories(InstallDir + '\nginx\conf');
+  ForceDirectories(InstallDir + '\logs\frontend');
+  SaveStringToFile(InstallDir + '\nginx\conf\nginx.conf', AnsiString(Content), False);
+end;
+
+
 // ─── Instalación de servicios NSSM ────────────────────────────────────────
 
 procedure InstallNSSMServices(InstallDir, SelectedIP: String);
 var
   NssmExe: String;
-  NodeExe: String;
   LogBase: String;
   RC:      Integer;
 begin
@@ -854,7 +923,6 @@ begin
   LogBase  := InstallDir + '\logs';
   ForceDirectories(LogBase + '\backend');
   ForceDirectories(LogBase + '\frontend');
-  NodeExe := GetNodeExePath;
 
   // ── Backend ────────────────────────────────────────────────────────────
   WizardForm.StatusLabel.Caption := 'Instalando servicio backend...';
@@ -874,23 +942,18 @@ begin
   Exec(NssmExe, 'set "' + '{#SvcBackend}' + '" AppRestartDelay 3000',     '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcBackend}' + '" AppThrottle 5000',         '', SW_HIDE, ewWaitUntilTerminated, RC);
 
-  // ── Frontend ───────────────────────────────────────────────────────────
-  WizardForm.StatusLabel.Caption := 'Instalando servicio frontend...';
+  // ── Frontend (nginx sirve la SPA estática + proxy al backend) ──────────
+  WizardForm.StatusLabel.Caption := 'Instalando servicio frontend (nginx)...';
   Exec(NssmExe, 'stop "'   + '{#SvcFrontend}' + '"', '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'remove "' + '{#SvcFrontend}' + '" confirm', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Exec(NssmExe, 'install "' + '{#SvcFrontend}' + '" "' + NodeExe + '"', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppParameters "server-https.js"', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppDirectory "' + InstallDir + '\frontend"', '', SW_HIDE, ewWaitUntilTerminated, RC);
+  Exec(NssmExe, 'install "' + '{#SvcFrontend}' + '" "' + InstallDir + '\nginx\nginx.exe"', '', SW_HIDE, ewWaitUntilTerminated, RC);
+  // Sin AppParameters: nginx sin argumentos busca conf\nginx.conf relativo
+  // a su directorio de trabajo, que NSSM fija con AppDirectory — evita
+  // tener que pasarle rutas con espacios (Program Files) como -p/-c.
+  Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppDirectory "' + InstallDir + '\nginx"', '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" DisplayName "Suprema LATAM BioVisitor Web GUI"', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" Description "Interfaz Web HTTPS — Suprema LATAM BioVisitor X"', '', SW_HIDE, ewWaitUntilTerminated, RC);
+  Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" Description "Interfaz Web HTTPS (nginx) — Suprema LATAM BioVisitor X"', '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" Start SERVICE_AUTO_START', '', SW_HIDE, ewWaitUntilTerminated, RC);
-  Exec(NssmExe,
-    'set "' + '{#SvcFrontend}' + '" AppEnvironmentExtra' +
-    ' "NODE_ENV=production" "NEXT_PUBLIC_API_URL=/api/v1"' +
-    ' "PORT=' + IntToStr(PortHTTPS) + '"' +
-    ' "HTTP_PORT=' + IntToStr(PortHTTP) + '"' +
-    ' "NEXT_INTERNAL_PORT=3000"',
-    '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppStdout "' + LogBase + '\frontend\frontend.log"',       '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppStderr "' + LogBase + '\frontend\frontend-error.log"', '', SW_HIDE, ewWaitUntilTerminated, RC);
   Exec(NssmExe, 'set "' + '{#SvcFrontend}' + '" AppRotateFiles 1',         '', SW_HIDE, ewWaitUntilTerminated, RC);
@@ -1156,15 +1219,6 @@ begin
   // el resto de la instalación —sobre todo el .env del backend, que el
   // usuario necesita sí o sí— continúa en lugar de quedar a medias.
 
-  // 1 – Node.js
-  try
-    WizardForm.StatusLabel.Caption := 'Verificando Node.js...';
-    InstallNodeJS;
-    LogInstallStep(InstallDir, 'Node.js: OK');
-  except
-    LogInstallStep(InstallDir, 'Node.js: ERROR - ' + GetExceptionMessage);
-  end;
-
   // 2 – Redis (se omite en modo actualización: ya está instalado)
   if not IsUpgradeMode then
   try
@@ -1230,7 +1284,16 @@ begin
     LogInstallStep(InstallDir, 'Certificado SSL: ERROR - ' + GetExceptionMessage);
   end;
 
-  // 7 – Servicios NSSM
+  // 7a – Configuración de nginx (SPA + proxy al backend)
+  try
+    WizardForm.StatusLabel.Caption := 'Generando configuración de nginx...';
+    GenerateNginxConf(InstallDir);
+    LogInstallStep(InstallDir, 'nginx.conf: OK');
+  except
+    LogInstallStep(InstallDir, 'nginx.conf: ERROR - ' + GetExceptionMessage);
+  end;
+
+  // 7b – Servicios NSSM
   try
     WizardForm.StatusLabel.Caption := 'Instalando servicios de Windows...';
     InstallNSSMServices(InstallDir, SelectedIP);
@@ -1291,77 +1354,144 @@ begin
   end;
 end;
 
+// Leída por los Check: de [UninstallDelete] — devuelve lo que el usuario
+// contestó en el diálogo de borrado total de CurUninstallStepChanged, que
+// se ejecuta antes de que Inno procese [UninstallDelete].
+function ShouldDeleteAllData: Boolean;
+begin
+  Result := DeleteAllData;
+end;
+
+// Busca en el registro de Windows (64 y 32 bit) un programa instalado por
+// MSI cuyo DisplayName contenga NameSubstring, y devuelve su UninstallString
+// (algo como "MsiExec.exe /X{GUID}"). Se usa para desinstalar Redis sin
+// depender del .msi original — ese archivo se copiaba a {tmp} durante la
+// instalación con Flags: deleteafterinstall, así que ya no existe en el
+// equipo para cuando se ejecuta el desinstalador.
+function FindMsiUninstallString(NameSubstring: String): String;
+var
+  PSScript: String;
+  TmpFile:  String;
+  Lines:    TArrayOfString;
+begin
+  Result   := '';
+  TmpFile  := ExpandConstant('{tmp}\bvx_msi_uninstall.txt');
+  PSScript :=
+    '$paths = @(' + #13#10 +
+    '  ''HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'',' + #13#10 +
+    '  ''HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*''' + #13#10 +
+    ')' + #13#10 +
+    '$app = Get-ItemProperty $paths -ErrorAction SilentlyContinue |' + #13#10 +
+    '  Where-Object { $_.DisplayName -like ''*' + NameSubstring + '*'' } |' + #13#10 +
+    '  Select-Object -First 1' + #13#10 +
+    'if ($app) { $app.UninstallString | Out-File -FilePath ''' + TmpFile + ''' -Encoding ASCII -NoNewline }';
+  RunPSFile(PSScript);
+  if LoadStringsFromFile(TmpFile, Lines) then
+    if GetArrayLength(Lines) > 0 then
+      Result := Trim(Lines[0]);
+end;
+
+// Ejecuta un UninstallString de MSI ("MsiExec.exe /X{GUID}" o similar) en
+// modo silencioso, extrayendo el GUID con una expresión regular simple en
+// vez de asumir el formato exacto del string.
+procedure RunMsiUninstallString(UninstallStr: String);
+var
+  GuidStart, GuidEnd: Integer;
+  Guid: String;
+  RC:   Integer;
+begin
+  if UninstallStr = '' then Exit;
+  GuidStart := Pos('{', UninstallStr);
+  GuidEnd   := Pos('}', UninstallStr);
+  if (GuidStart > 0) and (GuidEnd > GuidStart) then
+  begin
+    Guid := Copy(UninstallStr, GuidStart, GuidEnd - GuidStart + 1);
+    Exec('msiexec.exe', '/x ' + Guid + ' /quiet /norestart', '', SW_HIDE, ewWaitUntilTerminated, RC);
+  end;
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
-  Answer:  Integer;
-  PgBin:   String;
-  PsqlExe: String;
-  SuperPw: String;
-  DbPort:  String;
-  TmpSql:  String;
-  RC:      Integer;
+  Answer:   Integer;
+  PgBin:    String;
+  PsqlExe:  String;
+  SuperPw:  String;
+  DbPort:   String;
+  TmpSql:   String;
+  PgRoot:   String;
+  RedisUninstallStr: String;
+  RC:       Integer;
 begin
-  // Justo ANTES de desinstalar los archivos — preguntar por la BD
+  // Justo ANTES de desinstalar los archivos — preguntar por el borrado total
   if CurUninstallStep = usUninstall then
   begin
     Answer := MsgBox(
-      '¿Desea eliminar la base de datos de BioVisitor X?' + #13#10 + #13#10 +
-      '  Nombre de la BD: biovisitor_db' + #13#10 + #13#10 +
-      'Si elige SÍ, se perderán TODOS los registros de visitantes,' + #13#10 +
-      'visitas, auditoría y configuración.' + #13#10 + #13#10 +
-      'Si elige NO, la base de datos quedará intacta en PostgreSQL' + #13#10 +
-      'y podrá hacer un respaldo antes de eliminarla manualmente.' + #13#10 + #13#10 +
-      '¿Eliminar la base de datos?',
+      '¿Eliminar TODOS los datos de BioVisitor X?' + #13#10 + #13#10 +
+      'Esto incluye: la base de datos "biovisitor_db", el servidor' + #13#10 +
+      'PostgreSQL completo, Redis, certificados SSL, fotos de visitantes,' + #13#10 +
+      'logs y el archivo .env con las claves de seguridad.' + #13#10 + #13#10 +
+      'Esta acción NO se puede deshacer.' + #13#10 + #13#10 +
+      'Si elige NO, la base de datos, PostgreSQL, Redis y los archivos' + #13#10 +
+      'subidos quedarán intactos por si desea recuperarlos o migrarlos' + #13#10 +
+      'a una nueva instalación.',
       mbConfirmation,
       MB_YESNO or MB_DEFBUTTON2);   // "No" como opción por defecto
 
-    if Answer = IDYES then
+    DeleteAllData := (Answer = IDYES);
+    if not DeleteAllData then Exit;
+
+    // 1) Base de datos de BioVisitor — best-effort: si Postgres ya no está
+    // en ejecución (p.ej. de una instalación previa rota) esto simplemente
+    // no encontrará nada que borrar, y seguimos con el resto de la limpieza
+    // de todos modos.
+    SuperPw := ReadEnvValue(ExpandConstant('{app}') + '\backend\.env', 'DB_PASSWORD');
+    DbPort  := ReadEnvValue(ExpandConstant('{app}') + '\backend\.env', 'DB_PORT');
+    if DbPort = '' then DbPort := '{#DefaultDbPort}';
+    PgBin := FindPgBin;
+
+    if (SuperPw <> '') and (PgBin <> '') then
     begin
-      // La contraseña de postgres ya quedó guardada en backend\.env durante
-      // la instalación (BioVisitor se conecta con ese mismo superusuario),
-      // así que la reutilizamos en vez de volver a pedirla.
-      SuperPw := ReadEnvValue(ExpandConstant('{app}') + '\backend\.env', 'DB_PASSWORD');
-      if SuperPw = '' then
-      begin
-        MsgBox('No se pudo leer la contraseña de PostgreSQL desde backend\.env.' + #13#10 +
-               'Elimina la base de datos manualmente con pgAdmin o psql.', mbError, MB_OK);
-        Exit;
-      end;
-
-      DbPort := ReadEnvValue(ExpandConstant('{app}') + '\backend\.env', 'DB_PORT');
-      if DbPort = '' then DbPort := '{#DefaultDbPort}';
-
-      PgBin := FindPgBin;
-      if PgBin = '' then
-      begin
-        MsgBox('No se encontró psql.exe. Elimina la BD manualmente con pgAdmin.',
-               mbError, MB_OK);
-        Exit;
-      end;
-
       PsqlExe := PgBin + '\psql.exe';
       TmpSql  := ExpandConstant('{tmp}') + '\bvx_drop.sql';
       SetEnvironmentVariable('PGPASSWORD', SuperPw);
-
-      // Terminar conexiones activas y eliminar la BD
-      // (no se elimina ningún rol: BioVisitor usa el superusuario "postgres")
       SaveStringToFile(TmpSql,
         'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=''biovisitor_db'';' + #13#10 +
         'DROP DATABASE IF EXISTS biovisitor_db;',
         False);
-
       Exec(PsqlExe,
         '-U postgres -h 127.0.0.1 -p ' + DbPort + ' -f "' + TmpSql + '"',
         '', SW_HIDE, ewWaitUntilTerminated, RC);
-
       SetEnvironmentVariable('PGPASSWORD', '');
-
-      if RC = 0 then
-        MsgBox('La base de datos biovisitor_db fue eliminada correctamente.', mbInformation, MB_OK)
-      else
-        MsgBox('No se pudo eliminar la base de datos automáticamente.' + #13#10 +
-               'Elimínala manualmente con pgAdmin o psql.', mbError, MB_OK);
     end;
+
+    // 2) Servidor PostgreSQL completo (programa + datos) — lo instala el
+    // instalador nativo de EDB, separado de BioVisitor X. Antes solo se
+    // borraba la base de datos y este programa quedaba instalado, lo que
+    // hacía que cada ciclo de instalación/desinstalación en la misma
+    // máquina fuera ACUMULANDO instalaciones de PostgreSQL sin limpiar la
+    // anterior (la siguiente instalación encontraba el directorio por
+    // defecto ya ocupado y podía fallar en registrar el servicio con el
+    // nombre nuevo). Ahora, si el usuario confirmó el borrado total: se
+    // detiene el servicio, se corre el desinstalador de EDB en modo
+    // desatendido (mismo --mode unattended que usa la instalación), y
+    // ADEMÁS se borra el directorio completo a la fuerza — así queda
+    // garantizado que no sobrevive ningún dato sin importar qué haya
+    // decidido ese desinstalador por su cuenta sobre el directorio de datos.
+    Exec('net.exe', 'stop "{#PgServiceName}"', '', SW_HIDE, ewWaitUntilTerminated, RC);
+    PgRoot := ExpandConstant('{commonpf}') + '\PostgreSQL\{#PostgreSQLVersion}';
+    if FileExists(PgRoot + '\uninstall-postgresql.exe') then
+      Exec(PgRoot + '\uninstall-postgresql.exe', '--mode unattended',
+        '', SW_HIDE, ewWaitUntilTerminated, RC);
+    if DirExists(PgRoot) then
+      DelTree(PgRoot, True, True, True);
+
+    // 3) Redis — mismo problema: instalado por su propio .msi, nunca
+    // desinstalado por nosotros. El .msi original ya no existe en el
+    // equipo (se copiaba a {tmp} con deleteafterinstall), así que se busca
+    // su UninstallString en el registro en vez de re-ejecutar el .msi.
+    RedisUninstallStr := FindMsiUninstallString('Redis');
+    if RedisUninstallStr <> '' then
+      RunMsiUninstallString(RedisUninstallStr);
   end;
 end;
 

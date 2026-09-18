@@ -2,8 +2,11 @@
 /**
  * BioVisitor X — Supervisor de procesos
  *
- * Arranca backend y frontend, los reinicia si crashean,
- * escribe logs, y se cierra limpio con SIGTERM/SIGINT.
+ * Arranca el backend, lo reinicia si crashea, escribe logs, y se cierra
+ * limpio con SIGTERM/SIGINT. El frontend (nginx) ya NO se supervisa aquí:
+ * es un servicio Windows independiente (via NSSM, ver
+ * windows-deployment/setup/biovisitor-setup.iss), igual que PostgreSQL y
+ * Redis — no un proceso Node.js hijo de este script.
  *
  * Usar solo módulos nativos de Node.js — sin dependencias externas.
  *
@@ -20,7 +23,6 @@ process.chdir(__dirname);
 const { spawn } = require('child_process');
 const path  = require('path');
 const fs    = require('fs');
-const net   = require('net');
 
 const BASE = process.env.BIOVISITOR_DIR || 'C:\\BioVisitor';
 const LOGS = process.env.LOG_DIR        || path.join(BASE, 'logs');
@@ -29,7 +31,6 @@ const LOGS = process.env.LOG_DIR        || path.join(BASE, 'logs');
 function ensureDir(d) { if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true }); }
 
 ensureDir(path.join(LOGS, 'backend'));
-ensureDir(path.join(LOGS, 'frontend'));
 
 function makeLogger(name) {
   const file = path.join(LOGS, name, `${name}.log`);
@@ -52,43 +53,11 @@ const services = [
     restartDelay: 3000,
     maxRestarts:  10,
   },
-  {
-    name:         'frontend',
-    cmd:          process.execPath,
-    args:         [path.join(BASE, 'frontend', 'server-https.js')],
-    cwd:          path.join(BASE, 'frontend'),
-    env: {
-      ...process.env,
-      NODE_ENV:              'production',
-      PORT:                  '443',
-      HTTP_PORT:             '80',
-      NEXT_INTERNAL_PORT:    '3000',
-      NEXT_PUBLIC_API_URL:   '/api/v1',
-    },
-    startAfterBackend: true,
-    restartDelay:      6000,
-    maxRestarts:       10,
-  },
 ];
 
 // ── Control de procesos ────────────────────────────────────────────────────
 const running = new Map();
 let   shuttingDown = false;
-
-function waitPort(port, retries, delay) {
-  return new Promise((resolve, reject) => {
-    function attempt(n) {
-      const sock = net.createConnection(port, '127.0.0.1');
-      sock.on('connect', () => { sock.destroy(); resolve(); });
-      sock.on('error', () => {
-        sock.destroy();
-        if (n <= 0) return reject(new Error(`Puerto ${port} no responde`));
-        setTimeout(() => attempt(n - 1), delay);
-      });
-    }
-    attempt(retries);
-  });
-}
 
 function startService(svc, restartCount = 0) {
   if (shuttingDown) return;
@@ -143,24 +112,8 @@ supervisorLog('BioVisitor X Supervisor iniciado');
 supervisorLog(`Directorio base: ${BASE}`);
 
 async function main() {
-  const backend  = services.find(s => s.name === 'backend');
-  const frontend = services.find(s => s.name === 'frontend');
-
-  // Iniciar backend
+  const backend = services.find(s => s.name === 'backend');
   startService(backend);
-
-  // Esperar a que el backend esté listo antes del frontend
-  if (backend.healthPort) {
-    supervisorLog(`Esperando a que el backend responda en puerto ${backend.healthPort}...`);
-    try {
-      await waitPort(backend.healthPort, 60, 1000);
-      supervisorLog('Backend listo.');
-    } catch {
-      supervisorLog('WARN: Backend no respondió en 60s. Iniciando frontend de todos modos.');
-    }
-  }
-
-  startService(frontend);
 }
 
 // ── Cierre limpio ──────────────────────────────────────────────────────────

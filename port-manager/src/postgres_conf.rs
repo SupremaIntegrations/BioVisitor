@@ -1,5 +1,5 @@
 //! Ubicación y edición de `postgresql.conf` — el puerto real de escucha de
-//! "BioVisitor Database Service" vive ahí, no solo en el `.env` del
+//! "Suprema-LATAM-BioVisitor-Database-Service" vive ahí, no solo en el `.env` del
 //! backend. Mismo patrón de búsqueda de rutas que `FindPgBin` en
 //! biovisitor-setup.iss (probar versiones 16/15/14 bajo el directorio
 //! estándar de EDB), y mismo estilo de patch-una-línea que `env_file.rs`.

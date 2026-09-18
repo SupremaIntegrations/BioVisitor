@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Camera, UploadCloud, UserCircle2, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useUrlToken } from '@/lib/useUrlToken';
 import { api } from '@/lib/api';
 
 interface TokenData {
@@ -13,8 +13,7 @@ interface TokenData {
 }
 
 export default function PreRegistrationPortal() {
-    const params = useParams();
-    const token = params.token as string;
+    const token = useUrlToken();
 
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +31,7 @@ export default function PreRegistrationPortal() {
     const [isCameraActive, setIsCameraActive] = useState(false);
 
     useEffect(() => {
+        if (!token) return;
         const validateToken = async () => {
             try {
                 const response = await api.get(`/pre-registration/token/${token}`);

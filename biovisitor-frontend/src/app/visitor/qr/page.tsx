@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { QrCode, RefreshCw, Clock, AlertCircle, CheckCircle2, PauseCircle } from 'lucide-react';
+import { useUrlToken } from '@/lib/useUrlToken';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -15,8 +16,8 @@ interface QrData {
     showRenewButton: boolean;
 }
 
-export default function VisitorQrPortalPage({ params }: { params: Promise<{ token: string }> }) {
-    const { token } = React.use(params);
+export default function VisitorQrPortalPage() {
+    const token = useUrlToken();
 
     const [qrData, setQrData]       = useState<QrData | null>(null);
     const [loading, setLoading]     = useState(true);
@@ -38,6 +39,7 @@ export default function VisitorQrPortalPage({ params }: { params: Promise<{ toke
 
     // ── Fetch initial QR (triggers lazy BioStar enrollment on first open) ──
     const fetchQr = useCallback(async () => {
+        if (!token) return;
         setError(null);
         try {
             const res = await fetch(`${API_BASE}/visitors/qr-portal/${token}`);

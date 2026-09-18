@@ -6,7 +6,7 @@
 use crate::config::AppConfig;
 use crate::model::{AppResult, ServiceKey, ServiceStatus};
 use crate::port_check::ListenerInfo;
-use crate::{backup_restore, env_file, logging, nssm, postgres_conf, service_control, service_discovery};
+use crate::{backup_restore, env_file, logging, nginx_conf, postgres_conf, service_control, service_discovery};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -22,7 +22,7 @@ pub enum Command {
     StopAll,
     ScanPorts,
     ApplyBackendPort { new_port: u16 },
-    ApplyFrontendPorts { https: u16, http: u16, internal: u16 },
+    ApplyFrontendPorts { https: u16, http: u16 },
     ApplyPostgresPort { new_port: u16 },
     DetectRedisService,
     CreateBackup { dest_dir: PathBuf, password: String },
@@ -180,24 +180,17 @@ fn run_loop(rx_cmd: Receiver<Command>, tx_evt: Sender<Event>, config: Arc<Mutex<
                 let _ = tx_evt.send(Event::StatusUpdated(ServiceKey::Backend, status));
             }
 
-            Command::ApplyFrontendPorts { https, http, internal } => {
-                let label = format!("Cambiar puertos del frontend a {https}/{http}/{internal}");
+            Command::ApplyFrontendPorts { https, http } => {
+                let label = format!("Cambiar puertos del frontend a {https}/{http}");
                 let _ = tx_evt.send(Event::OperationStarted(label.clone()));
-                let nssm_exe = nssm::nssm_path(&install_dir);
-                let vars = [
-                    ("NODE_ENV", "production"),
-                    ("NEXT_PUBLIC_API_URL", "/api/v1"),
-                    ("PORT", &https.to_string()),
-                    ("HTTP_PORT", &http.to_string()),
-                    ("NEXT_INTERNAL_PORT", &internal.to_string()),
-                ];
-                let result: AppResult<()> =
-                    nssm::set_app_environment_extra(&nssm_exe, service_control::SVC_FRONTEND, &vars)
-                        .and_then(|_| service_control::restart_service(service_control::SVC_FRONTEND, RESTART_TIMEOUT));
+                let conf_path = nginx_conf::conf_path(&install_dir);
+                let result: AppResult<()> = nginx_conf::set_https_port(&conf_path, https)
+                    .and_then(|_| nginx_conf::set_http_port(&conf_path, http))
+                    .and_then(|_| service_control::restart_service(service_control::SVC_FRONTEND, RESTART_TIMEOUT));
                 report_and_log(
                     &tx_evt,
                     "ApplyFrontendPorts",
-                    &format!("PORT={https} HTTP_PORT={http} NEXT_INTERNAL_PORT={internal}"),
+                    &format!("HTTPS={https} HTTP={http}"),
                     result,
                     label,
                 );

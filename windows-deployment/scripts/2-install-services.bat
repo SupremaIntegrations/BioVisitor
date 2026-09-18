@@ -13,7 +13,8 @@ chcp 65001 > nul
 ::  Prerrequisitos:
 ::    - Ejecutar como Administrador
 ::    - nssm.exe descargado en {INSTALL_DIR}\tools\
-::    - Node.js 24+ instalado
+::    - nginx for Windows descomprimido en {INSTALL_DIR}\nginx\
+::      (sirve el frontend — el backend .exe no requiere Node.js)
 ::    - Certificado SSL generado (script 1-generate-ssl.bat)
 ::    - {INSTALL_DIR}\backend\.env configurado
 :: ============================================================
@@ -57,23 +58,26 @@ if "!NSSM!"=="" (
 )
 echo [OK] NSSM: !NSSM!
 
-:: ---- Detectar Node.js ----
-set NODE_EXE=
-for /f "tokens=*" %%i in ('where node 2^>nul') do set NODE_EXE=%%i
-if "!NODE_EXE!"=="" (
-    echo [ERROR] node.exe no encontrado. Instala Node.js 24 LTS: https://nodejs.org
-    pause & exit /b 1
-)
-echo [OK] Node.js: !NODE_EXE!
-
 :: ---- Verificar archivos clave ----
 if not exist "!INSTALL_DIR!\backend\biovisitor-backend.exe" (
     echo [ERROR] No encontrado: !INSTALL_DIR!\backend\biovisitor-backend.exe
     pause & exit /b 1
 )
-if not exist "!INSTALL_DIR!\frontend\server-https.js" (
-    echo [ERROR] No encontrado: !INSTALL_DIR!\frontend\server-https.js
-    echo Copia windows-deployment\assets\server-https.js a esa carpeta primero.
+if not exist "!INSTALL_DIR!\nginx\nginx.exe" (
+    echo [ERROR] No encontrado: !INSTALL_DIR!\nginx\nginx.exe
+    echo Descomprime nginx for Windows en esa carpeta primero
+    echo ^(ver windows-deployment\setup\download-all.ps1^).
+    pause & exit /b 1
+)
+if not exist "!INSTALL_DIR!\nginx\conf\nginx.conf" (
+    echo [ERROR] No encontrado: !INSTALL_DIR!\nginx\conf\nginx.conf
+    echo Genera este archivo a partir de windows-deployment\assets\nginx.conf.template
+    echo ^(sustituye {{PORT_HTTPS}}, {{PORT_HTTP}}, {{PORT_API}} y {{INSTALL_DIR}}^).
+    pause & exit /b 1
+)
+if not exist "!INSTALL_DIR!\frontend\out\index.html" (
+    echo [ERROR] No encontrado: !INSTALL_DIR!\frontend\out\index.html
+    echo Copia la build estatica del frontend ^(next build, output: 'export'^) a esa carpeta.
     pause & exit /b 1
 )
 if not exist "!INSTALL_DIR!\frontend\cert\server.crt" (
@@ -118,7 +122,7 @@ echo [1/2] Instalando "!SVC_BACKEND!"...
 echo [OK] "!SVC_BACKEND!" instalado.
 
 :: ============================================================
-::  Servicio 2: "Suprema LATAM BioVisitor Web GUI" (Frontend)
+::  Servicio 2: "Suprema LATAM BioVisitor Web GUI" (Frontend / nginx)
 :: ============================================================
 echo.
 echo [2/2] Instalando "!SVC_FRONTEND!"...
@@ -126,13 +130,14 @@ echo [2/2] Instalando "!SVC_FRONTEND!"...
 "!NSSM!" stop   "!SVC_FRONTEND!" >nul 2>&1
 "!NSSM!" remove "!SVC_FRONTEND!" confirm >nul 2>&1
 
-"!NSSM!" install "!SVC_FRONTEND!" "!NODE_EXE!"
-"!NSSM!" set "!SVC_FRONTEND!" AppParameters          "server-https.js"
-"!NSSM!" set "!SVC_FRONTEND!" AppDirectory           "!INSTALL_DIR!\frontend"
+:: Sin AppParameters: nginx sin argumentos busca conf\nginx.conf relativo a
+:: su directorio de trabajo, que fijamos con AppDirectory — evita pasarle
+:: rutas con espacios (Program Files) como -p/-c.
+"!NSSM!" install "!SVC_FRONTEND!" "!INSTALL_DIR!\nginx\nginx.exe"
+"!NSSM!" set "!SVC_FRONTEND!" AppDirectory           "!INSTALL_DIR!\nginx"
 "!NSSM!" set "!SVC_FRONTEND!" DisplayName            "Suprema LATAM BioVisitor Web GUI"
-"!NSSM!" set "!SVC_FRONTEND!" Description            "Interfaz Web HTTPS de BioVisitor X — Suprema LATAM"
+"!NSSM!" set "!SVC_FRONTEND!" Description            "Interfaz Web HTTPS (nginx) de BioVisitor X — Suprema LATAM"
 "!NSSM!" set "!SVC_FRONTEND!" Start                  SERVICE_AUTO_START
-"!NSSM!" set "!SVC_FRONTEND!" AppEnvironmentExtra    "NODE_ENV=production" "NEXT_PUBLIC_API_URL=/api/v1" "PORT=443" "HTTP_PORT=80" "NEXT_INTERNAL_PORT=3000"
 "!NSSM!" set "!SVC_FRONTEND!" AppStdout              "!INSTALL_DIR!\logs\frontend\frontend.log"
 "!NSSM!" set "!SVC_FRONTEND!" AppStderr              "!INSTALL_DIR!\logs\frontend\frontend-error.log"
 "!NSSM!" set "!SVC_FRONTEND!" AppStdoutCreationDisposition OPEN_ALWAYS

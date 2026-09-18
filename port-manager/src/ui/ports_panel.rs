@@ -36,27 +36,21 @@ pub fn show(app: &mut AdminApp, ui: &mut Ui) {
     ui.add_space(10.0);
 
     ui.group(|ui| {
-        ui.label(egui::RichText::new("Frontend").strong());
+        ui.label(egui::RichText::new("Frontend (nginx)").strong());
         let form = app.ports_form_mut();
         port_field(ui, "Puerto HTTPS (público):", &mut form.frontend_https);
         port_field(ui, "Puerto HTTP (redirección):", &mut form.frontend_http);
-        ui.collapsing("Avanzado", |ui| {
-            port_field(ui, "Puerto interno de Next.js:", &mut form.frontend_internal);
-        });
         let https = form.frontend_https.clone();
         let http = form.frontend_http.clone();
-        let internal = form.frontend_internal.clone();
         if ui.button("Guardar y reiniciar frontend").clicked() {
-            if let (Some(https), Some(http), Some(internal)) =
-                (parse_port(&https), parse_port(&http), parse_port(&internal))
-            {
+            if let (Some(https), Some(http)) = (parse_port(&https), parse_port(&http)) {
                 if https != http {
                     // El chequeo de conflicto se hace contra el puerto HTTPS
                     // (el principal); si ambos cambiaron y solo uno choca,
                     // el admin lo verá igual al aplicar y podrá reintentar.
                     app.check_and_apply_pub(
                         https,
-                        PendingAction::ApplyFrontendPorts { https, http, internal },
+                        PendingAction::ApplyFrontendPorts { https, http },
                         "frontend",
                     );
                 }
@@ -67,7 +61,7 @@ pub fn show(app: &mut AdminApp, ui: &mut Ui) {
     ui.add_space(10.0);
 
     ui.group(|ui| {
-        ui.label(egui::RichText::new("PostgreSQL (BioVisitor Database Service)").strong());
+        ui.label(egui::RichText::new("PostgreSQL (Suprema-LATAM-BioVisitor-Database-Service)").strong());
         let form = app.ports_form_mut();
         port_field(ui, "Puerto:", &mut form.postgres_port);
         let pg_value = form.postgres_port.clone();

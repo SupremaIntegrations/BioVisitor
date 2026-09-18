@@ -9,6 +9,7 @@
 #    - PostgreSQL 16.2
 #    - Redis for Windows 5.0.14.1
 #    - Node.js 24 LTS
+#    - nginx for Windows (sirve el frontend estático)
 #    - NSSM (Non-Sucking Service Manager)
 #    - Inno Setup 6 (compilador del installer)
 # ================================================================
@@ -115,6 +116,12 @@ $NssmZipUrl  = "https://nssm.cc/release/nssm-2.24.zip"
 $NssmZipDest = Join-Path $env:TEMP "nssm-2.24.zip"
 $NssmExeDest = Join-Path $ToolsDir "nssm.exe"
 
+# nginx for Windows — ZIP que extraeremos completo (nginx.exe + conf/ + html/)
+$NginxVersion = "1.30.4"
+$NginxZipUrl  = "https://nginx.org/download/nginx-$NginxVersion.zip"
+$NginxZipDest = Join-Path $env:TEMP "nginx-$NginxVersion.zip"
+$NginxDestDir = Join-Path $RedistDir "nginx-$NginxVersion"
+
 # Inno Setup — instalador
 $InnoUrl  = "https://files.jrsoftware.org/is/7/innosetup-7.0.0.exe"
 $InnoDest = Join-Path $env:TEMP "innosetup-7.0.0.exe"
@@ -181,6 +188,31 @@ if (Test-Path $NssmExeDest) {
     }
 }
 
+# ── nginx for Windows ────────────────────────────────────────
+Write-Host ""
+Write-Host "══ nginx for Windows ═══════════════════════════════════" -ForegroundColor Yellow
+
+if (Test-Path (Join-Path $NginxDestDir "nginx.exe")) {
+    Write-Host "  [OK] nginx ya existe en redist\nginx-$NginxVersion\" -ForegroundColor Green
+} else {
+    try {
+        Download-File -Url $NginxZipUrl -Dest $NginxZipDest -Label "nginx $NginxVersion for Windows"
+
+        Write-Host "  Extrayendo nginx-$NginxVersion..."
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($NginxZipDest, $RedistDir)
+        if (Test-Path (Join-Path $NginxDestDir "nginx.exe")) {
+            Write-Host "  [OK] nginx extraido a redist\nginx-$NginxVersion\" -ForegroundColor Green
+        } else {
+            Write-Host "  [ERROR] No se encontro nginx.exe tras extraer el ZIP." -ForegroundColor Red
+        }
+    } catch {
+        Write-Host "  [FALLO] $_" -ForegroundColor Red
+        Write-Host "  Descarga manual: https://nginx.org/en/download.html"
+        Write-Host "  Extrae el ZIP dentro de: $RedistDir"
+    }
+}
+
 # ── Inno Setup ────────────────────────────────────────────────
 Write-Host ""
 Write-Host "══ Inno Setup 7 ════════════════════════════════════════" -ForegroundColor Yellow
@@ -215,6 +247,7 @@ $checks = @(
     @{ Path = Join-Path $RedistDir "Redis-x64-5.0.14.1.msi";            Label = "Redis MSI" },
     @{ Path = Join-Path $RedistDir "node-v24.19.0-x64.msi";             Label = "Node.js 24.19.0 MSI" },
     @{ Path = Join-Path $ToolsDir  "nssm.exe";                          Label = "NSSM" },
+    @{ Path = Join-Path $NginxDestDir "nginx.exe";                       Label = "nginx for Windows" },
     @{ Path = $IsccPath;                                                 Label = "Inno Setup 7 (iscc.exe)" }
 )
 

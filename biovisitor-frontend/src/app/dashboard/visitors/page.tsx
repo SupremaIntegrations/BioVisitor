@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
@@ -132,7 +132,18 @@ function fmtTime(iso: string | null) {
 
 /* ─────────────── component ─────────────── */
 
-export default function VisitorsManagement() {
+// useSearchParams() requires a Suspense boundary under output: 'export'
+// (static export) — same pattern already used in
+// src/app/auth/reset-password/page.tsx.
+export default function VisitorsPage() {
+    return (
+        <Suspense fallback={null}>
+            <VisitorsManagement />
+        </Suspense>
+    );
+}
+
+function VisitorsManagement() {
     const { t } = useI18n();
     const { labels: visitorTypeLabels } = useVisitorTypeCatalog();
     const { canViewPage } = usePermissions();

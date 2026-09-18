@@ -3,6 +3,11 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Environment secrets — never commit real credentials
+.env
+.env.local
+.env.*.local
+
 # Build output
 dist/
 build/
@@ -12,6 +17,11 @@ out/
 # Database data and massive binaries
 windows-deployment/output/*.exe
 windows-deployment/redist/*.exe
+
+# Compiled self-contained exe (pkg) — 260MB+, built via `npm run build:exe`,
+# never commit (caused a repo-bloat/push-timeout incident previously)
+/biovisitor-backend.exe
+/release/
 
 #local-services/**/*.zip
 #local-services/pg/data/

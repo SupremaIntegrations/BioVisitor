@@ -1,8 +1,8 @@
 //! Control nativo del Service Control Manager de Windows — start/stop/
 //! restart/query de cualquier servicio por nombre, sin pasar por NSSM
-//! (funciona igual sin importar qué registró el servicio). `nssm.rs` solo
-//! se usa aparte para el único parámetro que el SCM no expone:
-//! `AppEnvironmentExtra` del frontend.
+//! (funciona igual sin importar qué registró el servicio: NSSM solo se usó
+//! para REGISTRAR los servicios en el instalador, no hace falta para
+//! controlarlos después).
 
 use crate::model::{AppError, AppResult, ServiceStatus};
 use std::time::{Duration, Instant};
@@ -21,7 +21,7 @@ const ERROR_SERVICE_NOT_ACTIVE: i32 = 1062;
 /// pudiera existir en el mismo servidor).
 pub const SVC_BACKEND: &str = "Suprema LATAM BioVisitor Service";
 pub const SVC_FRONTEND: &str = "Suprema LATAM BioVisitor Web GUI";
-pub const SVC_POSTGRES: &str = "BioVisitor Database Service";
+pub const SVC_POSTGRES: &str = "Suprema-LATAM-BioVisitor-Database-Service";
 
 fn map_windows_service_error(name: &str, err: windows_service::Error) -> AppError {
     match err {
@@ -80,6 +80,19 @@ pub fn start_service(name: &str) -> AppResult<()> {
         .current_state;
     if current == ServiceState::Running {
         return Err(AppError::AlreadyInState(name.to_string(), ServiceStatus::Running));
+    }
+
+    if current == ServiceState::Paused {
+        // NSSM pausa el servicio cuando la app envuelta entra en crash-loop
+        // más allá de su límite de reintentos (AppThrottle). Windows no deja
+        // "reanudar" un servicio pausado con Start() — StartService() devuelve
+        // ERROR_SERVICE_ALREADY_RUNNING porque Paused cuenta como "iniciado"
+        // para el SCM — hace falta un stop+start real, igual que restart_service.
+        match stop_service(name) {
+            Ok(()) | Err(AppError::AlreadyInState(_, _)) => {}
+            Err(e) => return Err(e),
+        }
+        wait_for_status(name, ServiceStatus::Stopped, Duration::from_secs(15), Duration::from_millis(300))?;
     }
 
     match service.start::<&str>(&[]) {

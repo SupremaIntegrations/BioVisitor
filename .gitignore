@@ -17,6 +17,7 @@ biovisitor-frontend/.next/
 windows-deployment/output/*.exe
 windows-deployment/redist/*.exe
 windows-deployment/redist/*.msi
+windows-deployment/redist/nginx-*/
 
 local-services/**/*.zip
 local-services/logfile

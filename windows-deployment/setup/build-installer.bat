@@ -74,8 +74,9 @@ if not exist "%WD_DIR%\redist\Redis-x64-5.0.14.1.msi" (
   echo [WARN] MISSING: redist\Redis-x64-5.0.14.1.msi
   set "MISSING=1"
 )
-if not exist "%WD_DIR%\redist\node-v24.19.0-x64.msi" (
-  echo [INFO] OPTIONAL: redist\node-v24.19.0-x64.msi not found
+if not exist "%WD_DIR%\redist\nginx-1.30.4\nginx.exe" (
+  echo [WARN] MISSING: redist\nginx-1.30.4\nginx.exe
+  set "MISSING=1"
 )
 
 if "!MISSING!"=="1" (
@@ -162,7 +163,7 @@ echo [OK] biovisitor-backend.exe listo.
 popd
 
 REM ---------------------------------------------------------------
-REM 9. Build Frontend (Next.js standalone)
+REM 9. Build Frontend (Next.js static export — served by nginx)
 REM ---------------------------------------------------------------
 echo.
 echo [2/3] Building Next.js frontend...
@@ -170,10 +171,10 @@ echo -------------------------------------------------------
 
 pushd "%REPO_DIR%\biovisitor-frontend"
 
-if exist ".next\standalone\server.js" (
-  echo [OK] .next\standalone ya existe — se usara tal cual, sin recompilar.
-  echo      Borra la carpeta .next\standalone primero si quieres forzar una recompilacion.
-  goto :frontend_static_check
+if exist "out\index.html" (
+  echo [OK] out\ ya existe — se usara tal cual, sin recompilar.
+  echo      Borra la carpeta out\ primero si quieres forzar una recompilacion.
+  goto :frontend_done
 )
 
 if not exist "node_modules\.bin\next.cmd" (
@@ -203,23 +204,16 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist ".next\standalone" (
-  echo [ERROR] .next\standalone was not created.
-  echo Verify that next.config.ts contains: output: 'standalone'
+if not exist "out\index.html" (
+  echo [ERROR] out\index.html was not created.
+  echo Verify that next.config.ts contains: output: 'export'
   popd
   pause
   exit /b 1
 )
 
-:frontend_static_check
-if not exist ".next\standalone\public" (
-  xcopy /E /I /Q "public" ".next\standalone\public" >nul
-)
-if not exist ".next\standalone\.next\static" (
-  xcopy /E /I /Q ".next\static" ".next\standalone\.next\static" >nul
-)
-
-echo [OK] Frontend standalone ready.
+:frontend_done
+echo [OK] Frontend static export ready.
 popd
 
 REM ---------------------------------------------------------------

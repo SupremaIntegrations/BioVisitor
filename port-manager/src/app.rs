@@ -28,7 +28,6 @@ pub struct PortsForm {
     pub backend_port: String,
     pub frontend_https: String,
     pub frontend_http: String,
-    pub frontend_internal: String,
     pub postgres_port: String,
     pub redis_port_readonly: Option<u16>,
     pub loaded: bool,
@@ -40,7 +39,6 @@ impl Default for PortsForm {
             backend_port: String::new(),
             frontend_https: String::new(),
             frontend_http: String::new(),
-            frontend_internal: String::new(),
             postgres_port: String::new(),
             redis_port_readonly: None,
             loaded: false,
@@ -87,7 +85,7 @@ pub struct PendingConflict {
 #[derive(Clone)]
 pub enum PendingAction {
     ApplyBackendPort(u16),
-    ApplyFrontendPorts { https: u16, http: u16, internal: u16 },
+    ApplyFrontendPorts { https: u16, http: u16 },
     ApplyPostgresPort(u16),
 }
 
@@ -213,11 +211,11 @@ impl AdminApp {
         if let Ok(diag) = crate::env_file::get_diagnostic_ports(&env_path) {
             self.ports_form.redis_port_readonly = diag.redis_port;
         }
-        let (https, http, internal) =
-            crate::nssm::get_frontend_ports(crate::service_control::SVC_FRONTEND);
-        self.ports_form.frontend_https = https.map(|p| p.to_string()).unwrap_or_else(|| "443".to_string());
-        self.ports_form.frontend_http = http.map(|p| p.to_string()).unwrap_or_else(|| "80".to_string());
-        self.ports_form.frontend_internal = internal.map(|p| p.to_string()).unwrap_or_else(|| "3000".to_string());
+        let nginx_conf_path = crate::nginx_conf::conf_path(&install_dir);
+        if let Ok(ports) = crate::nginx_conf::get_ports(&nginx_conf_path) {
+            self.ports_form.frontend_https = ports.https.map(|p| p.to_string()).unwrap_or_else(|| "443".to_string());
+            self.ports_form.frontend_http = ports.http.map(|p| p.to_string()).unwrap_or_else(|| "80".to_string());
+        }
 
         if let Some(conf_path) = crate::postgres_conf::find_conf_path() {
             if let Ok(port) = crate::postgres_conf::get_port(&conf_path) {
@@ -253,8 +251,8 @@ impl AdminApp {
     fn dispatch_action(&mut self, action: PendingAction) {
         match action {
             PendingAction::ApplyBackendPort(p) => self.worker.send(Command::ApplyBackendPort { new_port: p }),
-            PendingAction::ApplyFrontendPorts { https, http, internal } => {
-                self.worker.send(Command::ApplyFrontendPorts { https, http, internal })
+            PendingAction::ApplyFrontendPorts { https, http } => {
+                self.worker.send(Command::ApplyFrontendPorts { https, http })
             }
             PendingAction::ApplyPostgresPort(p) => self.worker.send(Command::ApplyPostgresPort { new_port: p }),
         }

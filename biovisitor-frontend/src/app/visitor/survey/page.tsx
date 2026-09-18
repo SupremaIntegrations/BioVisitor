@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useUrlToken } from '@/lib/useUrlToken';
 import { Star, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 
 const PUBLIC_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -20,8 +20,7 @@ async function publicPost(path: string, body: object) {
 }
 
 export default function ExitSurveyPage() {
-    const params = useParams();
-    const token = params.token as string;
+    const token = useUrlToken();
 
     const [rating, setRating] = useState<number>(0);
     const [hoverRating, setHoverRating] = useState<number>(0);
